@@ -1,4 +1,4 @@
-import logo from '../assets/LOGO_FERRE.png'; 
+import LOGO_FERRE from '../assets/LOGO_FERRE.png'; 
 
 export const printTicket = (saleData, customerInfo) => {
 

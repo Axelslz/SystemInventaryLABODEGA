@@ -11,7 +11,6 @@ import { useInventory } from '../context/InventoryContext';
 import { printTicket } from '../utils/printTicket';
 import SalesHistory from '../components/SalesHistory';
 
-// Lista de vendedores simulada
 const VENDEDORES = [
   'JOSUE SANTIS',
   'MARIA PEREZ',
@@ -22,6 +21,7 @@ const VENDEDORES = [
 export default function POS() {
   const { products, addSale, sales } = useInventory();
   const theme = useTheme();
+  // eslint-disable-next-line no-unused-vars
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,15 +29,12 @@ export default function POS() {
   const [total, setTotal] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  // Estados nuevos para el ticket
   const [seller, setSeller] = useState('JOSUE SANTIS');
-  const [paymentMethod, setPaymentMethod] = useState('EFECTIVO'); // EFECTIVO o TRANSFERENCIA
-  const [amountPaid, setAmountPaid] = useState(''); // Monto con el que paga el cliente
+  const [paymentMethod, setPaymentMethod] = useState('EFECTIVO'); 
+  const [amountPaid, setAmountPaid] = useState(''); 
 
-  // Fecha actual para la vista previa
   const today = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
   const time = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-  // Folio simulado (en un sistema real vendría de la BD)
   const folio = "F10524"; 
 
   const [customer, setCustomer] = useState({
@@ -86,7 +83,6 @@ export default function POS() {
     setCustomer({ ...customer, [e.target.name]: e.target.value });
   };
 
-  // Cálculo del cambio
   const change = (parseFloat(amountPaid) || 0) - total;
 
   const handleCheckout = () => {
@@ -104,10 +100,8 @@ export default function POS() {
 
     if (window.confirm(`¿Imprimir ticket para ${customer.name}?`)) {
       const saleRecord = addSale(cart, total, customer); 
-      // Aquí pasarías saleData a tu función de impresión real
       printTicket(saleRecord, saleData); 
       
-      // Resetear
       setCart([]);
       setTotal(0);
       setAmountPaid('');
@@ -120,6 +114,17 @@ export default function POS() {
     }
   };
 
+  // --- FUNCIÓN MEJORADA PARA EL TAMAÑO DE LETRA DE LA TABLA ---
+  const getTableFontSize = (value) => {
+    const str = value.toString(); // Convierte el número a texto (ej: "3040.00")
+    
+    // Lógica más agresiva para números grandes
+    if (str.length > 9) return '10px'; // Ej: 10,000.00 (muy pequeño)
+    if (str.length > 7) return '11px'; // Ej: 1,000.00
+    if (str.length > 6) return '12px'; // Ej: 500.00
+    return '13px';                     // Normal
+  };
+
   return (
     <Container maxWidth={false} disableGutters sx={{ 
       height: 'calc(100vh - 64px)', 
@@ -130,10 +135,14 @@ export default function POS() {
       overflow: 'hidden'
     }}>
       
+      {/* IMPORTANTE: Aquí se definen los anchos.
+         La suma de los 'md' debe ser 12.
+         2 (catálogo) + 4 (carrito) + 3 (datos) + 3 (ticket) = 12 
+      */}
       <Grid container spacing={2} sx={{ height: '100%', width: '100%', m: 0 }}>
         
-        {/* ---------------- COLUMNA 1: CATÁLOGO (2 espacios) ---------------- */}
-        <Grid item xs={12} md={2} sx={{ height: '100%', pl: '0 !important' }}>
+        {/* ---------------- COLUMNA 1: CATÁLOGO (Ancho: 2) ---------------- */}
+        <Grid size={{ xs: 12, md: 2 }} sx={{ height: '100%', pl: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="subtitle1" gutterBottom color="primary" fontWeight="bold">
               1. Catálogo
@@ -162,16 +171,16 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={5} sx={{ height: '100%' }}> 
+        {/* ---------------- COLUMNA 2: CARRITO (Ancho: 4 - Reducido para dar espacio) ---------------- */}
+        <Grid size={{ xs: 12, md: 4 }} sx={{ height: '100%' }}> 
           <Paper elevation={2} sx={{ 
-            p: 2, 
+            p: 2, // Padding reducido un poco para aprovechar espacio
             height: '100%', 
             display: 'flex', 
             flexDirection: 'column',
-            justifyContent: 'space-between' // Esto asegura que el total se vaya al fondo
+            justifyContent: 'space-between'
           }}>
             
-            {/* ENCABEZADO DEL CARRITO */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1} sx={{ flexShrink: 0 }}>
               <Typography variant="subtitle1" color="primary" fontWeight="bold">2. Carrito ({cart.length})</Typography>
               <Button size="small" startIcon={<History />} onClick={() => setHistoryOpen(true)}>
@@ -179,62 +188,82 @@ export default function POS() {
               </Button>
             </Box>
             
-            {/* --- AQUÍ ESTÁ EL AJUSTE CLAVE --- */}
             <TableContainer sx={{ 
-              // En lugar de dejarlo crecer infinito, le ponemos un límite fijo:
-              height: 'calc(100vh - 300px)', // Calcula la altura de la pantalla menos el espacio de arriba/abajo
-              maxHeight: '450px',            // O un tope máximo en píxeles (AJUSTA ESTE NÚMERO SI LO QUIERES MÁS CHICO)
-              overflowY: 'auto',             // Activa el scroll si pasa esa altura
+              height: 'calc(100vh - 300px)', 
+              maxHeight: '500px',            
+              overflowY: 'auto',             
               bgcolor: '#fafafa', 
               borderRadius: 1, 
               border: '1px solid #eee',
-              mb: 2 // Un margen abajo para separarlo del total
+              mb: 2 
             }}>
-              <Table stickyHeader size="small" aria-label="tabla carrito">
+              <Table stickyHeader size="small" aria-label="tabla carrito" sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ pl:1, py:1, fontWeight: 'bold', fontSize:'12px', bgcolor:'#eee' }}>Producto</TableCell>
-                    <TableCell align="center" sx={{ p:0, fontWeight: 'bold', fontSize:'12px', bgcolor:'#eee' }}>Cant.</TableCell>
-                    <TableCell align="right" sx={{ pr:1, fontWeight: 'bold', fontSize:'12px', bgcolor:'#eee' }}>Total</TableCell>
-                    <TableCell align="center" sx={{ p:0, bgcolor:'#eee' }}></TableCell>
+                    {/* Anchos definidos en % para que no bailen */}
+                    <TableCell sx={{ width: '35%', pl:1, py:1, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Producto</TableCell>
+                    <TableCell align="center" sx={{ width: '20%', p:0, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Cant.</TableCell>
+                    <TableCell align="right" sx={{ width: '30%', pr:1, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Total</TableCell>
+                    <TableCell align="center" sx={{ width: '15%', p:0, bgcolor:'#eee' }}></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {cart.map((item) => (
-                    <TableRow key={item.id} hover>
-                      {/* Reduje el padding (pl: 1, py: 0.5) para que las filas sean más delgadas */}
-                      <TableCell sx={{ pl:1, py: 0.5 }}> 
-                        <Typography variant="body2" fontWeight="bold" sx={{fontSize:'13px', lineHeight: 1.2}}>
-                          {item.name}
-                        </Typography>
-                        {item.isWholesale && 
-                          <Chip label="MAYOREO" color="secondary" size="small" sx={{fontSize:9, height:16}} />
-                        }
-                      </TableCell>
-                      <TableCell align="center" sx={{ p:0 }}>
-                        <TextField 
-                          type="number" 
-                          variant="standard" 
-                          value={item.quantity}
-                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
-                          inputProps={{ min: 1, style: { textAlign: 'center', fontWeight: 'bold', padding: '2px' } }} 
-                          sx={{ width: 40 }}
-                        />
-                      </TableCell>
-                      <TableCell align="right" sx={{ pr:1, fontWeight: 'bold', fontSize: '13px' }}>
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </TableCell>
-                      <TableCell align="center" sx={{ p:0 }}>
-                        <IconButton color="error" size="small" onClick={() => removeFromCart(item.id)}>
-                          <Delete fontSize="small" sx={{ fontSize: '18px' }}/>
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {cart.map((item) => {
+                    const rowTotal = (item.price * item.quantity).toFixed(2);
+                    
+                    return (
+                      <TableRow key={item.id} hover>
+                        <TableCell sx={{ pl:1, py: 0.5 }}> 
+                          <Typography variant="body2" fontWeight="bold" sx={{fontSize:'12px', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}>
+                            {item.name}
+                          </Typography>
+                          {item.isWholesale && 
+                            <Chip label="MAYOREO" color="secondary" size="small" sx={{fontSize:9, height:16}} />
+                          }
+                        </TableCell>
+                        
+                        <TableCell align="center" sx={{ p:0 }}>
+                          <TextField 
+                            type="number" 
+                            variant="standard" 
+                            value={item.quantity}
+                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)}
+                            inputProps={{ 
+                              min: 1, 
+                              style: { 
+                                textAlign: 'center', 
+                                fontWeight: 'bold', 
+                                padding: '2px',
+                                fontSize: '12px' 
+                              } 
+                            }} 
+                            sx={{ width: '80%' }} 
+                          />
+                        </TableCell>
+
+                        {/* CELDA TOTAL CON AJUSTE DINÁMICO */}
+                        <TableCell align="right" sx={{ 
+                          pr:1, 
+                          fontWeight: 'bold', 
+                          fontSize: getTableFontSize(rowTotal), // <--- La magia del tamaño
+                          whiteSpace: 'nowrap', // <--- Importante: evita que baje de línea
+                          color: '#333'
+                        }}>
+                          ${rowTotal}
+                        </TableCell>
+
+                        <TableCell align="center" sx={{ p:0 }}>
+                          <IconButton color="error" size="small" onClick={() => removeFromCart(item.id)}>
+                            <Delete fontSize="small" sx={{ fontSize: '16px' }}/>
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {cart.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.disabled', fontSize:'13px' }}>
-                        Carrito vacío
+                      <TableCell colSpan={4} align="center" sx={{ py: 6, color: 'text.disabled', fontSize:'12px' }}>
+                        Vacío
                       </TableCell>
                     </TableRow>
                   )}
@@ -242,11 +271,10 @@ export default function POS() {
               </Table>
             </TableContainer>
 
-            {/* TOTAL FIJO ABAJO */}
             <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9', flexShrink: 0 }}>
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="body1" fontWeight="bold" color="text.secondary">TOTAL:</Typography>
-                <Typography variant="h4" color="primary" fontWeight="800">
+                <Typography variant="h4" color="primary" fontWeight="800" sx={{fontSize: total > 9999 ? '1.5rem' : '2rem'}}>
                   ${total.toFixed(2)}
                 </Typography>
               </Box>
@@ -254,15 +282,14 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* ---------------- COLUMNA 3: DATOS CLIENTE (2 espacios) ---------------- */}
-        <Grid item xs={12} md={2} sx={{ height: '100%' }}>
+        {/* ---------------- COLUMNA 3: DATOS TICKET (Ancho: 3 - Aumentado drásticamente) ---------------- */}
+        <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff', overflowY: 'auto' }}>
             <Typography variant="subtitle1" gutterBottom color="secondary" fontWeight="bold">
               3. Datos Ticket
             </Typography>
             
-            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 0 }}>
-              {/* Vendedor */}
+            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <FormControl fullWidth size="small" variant="outlined">
                 <InputLabel>Vendedor</InputLabel>
                 <Select
@@ -277,9 +304,8 @@ export default function POS() {
                 </Select>
               </FormControl>
 
-              <Divider sx={{my:0.5}}/>
+              <Divider />
 
-              {/* Datos Cliente */}
               <TextField
                 label="Nombre Cliente" name="name"
                 value={customer.name} onChange={handleCustomerChange}
@@ -290,33 +316,33 @@ export default function POS() {
                 value={customer.address} onChange={handleCustomerChange}
                 size="small" fullWidth multiline rows={2} variant="outlined"
               />
-              <TextField
-                label="Ciudad" name="location"
-                value={customer.location} onChange={handleCustomerChange}
-                size="small" fullWidth variant="outlined"
-              />
-              <TextField
-                label="Teléfono" name="phone"
-                value={customer.phone} onChange={handleCustomerChange}
-                size="small" fullWidth variant="outlined"
-              />
+              <Box display="flex" gap={1}>
+                <TextField
+                    label="Ciudad" name="location"
+                    value={customer.location} onChange={handleCustomerChange}
+                    size="small" fullWidth variant="outlined"
+                />
+                <TextField
+                    label="Teléfono" name="phone"
+                    value={customer.phone} onChange={handleCustomerChange}
+                    size="small" fullWidth variant="outlined"
+                />
+              </Box>
 
-              <Divider sx={{my:0.5}}/>
+              <Divider />
 
-              {/* Método de Pago */}
               <FormControl component="fieldset">
-                <FormLabel component="legend" sx={{fontSize: '0.8rem'}}>Método de Pago</FormLabel>
+                <FormLabel component="legend" sx={{fontSize: '0.9rem'}}>Método de Pago</FormLabel>
                 <RadioGroup
                   row
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
-                  <FormControlLabel value="EFECTIVO" control={<Radio size="small"/>} label={<Typography variant="caption">Efectivo</Typography>} />
-                  <FormControlLabel value="TRANSFERENCIA" control={<Radio size="small"/>} label={<Typography variant="caption">Transf.</Typography>} />
+                  <FormControlLabel value="EFECTIVO" control={<Radio size="small"/>} label={<Typography variant="body2">Efectivo</Typography>} />
+                  <FormControlLabel value="TRANSFERENCIA" control={<Radio size="small"/>} label={<Typography variant="body2">Transf.</Typography>} />
                 </RadioGroup>
               </FormControl>
 
-              {/* Si es Efectivo, mostrar campo para calcular cambio */}
               {paymentMethod === 'EFECTIVO' && (
                  <TextField
                   label="Pago con:" 
@@ -334,14 +360,13 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* ---------------- COLUMNA 4: VISTA PREVIA (3 espacios) ---------------- */}
-        <Grid item xs={12} md={3} sx={{ height: '100%' }}>
+        {/* ---------------- COLUMNA 4: VISTA PREVIA (Ancho: 3) ---------------- */}
+        <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%' }}>
           <Paper elevation={4} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#424242', color: 'white' }}>
             <Typography variant="subtitle1" gutterBottom sx={{color: '#fff', fontWeight:'bold', display:'flex', alignItems:'center', gap:1}}>
               <ReceiptLong /> Vista Previa
             </Typography>
 
-            {/* CONTENEDOR TICKET ESTILO TÉRMICO */}
             <Box sx={{ 
               flexGrow: 1, 
               bgcolor: '#fff', 
@@ -355,9 +380,7 @@ export default function POS() {
               fontSize: '11px',
               lineHeight: 1.2
             }}>
-              {/* ENCABEZADO */}
               <Box textAlign="center" mb={1}>
-                {/* LOGO SIMULADO */}
                 <Box sx={{display:'inline-block', border:'2px solid #000', p:0.5, mb:0.5}}>
                     <Typography variant="body2" fontWeight="900" sx={{fontSize: '16px', letterSpacing:1}}>LA BODEGA</Typography>
                 </Box>
@@ -366,7 +389,6 @@ export default function POS() {
                 <Typography variant="caption" display="block" sx={{fontSize: '9px'}}>================================</Typography>
               </Box>
 
-              {/* DATOS CLIENTE */}
               <Box mb={1} sx={{textTransform: 'uppercase'}}>
                 <Typography variant="body2" sx={{fontSize: '11px', fontWeight:'bold'}}>{customer.name}</Typography>
                 <Typography variant="caption" display="block" sx={{fontSize: '10px'}}>{customer.address}</Typography>
@@ -378,7 +400,6 @@ export default function POS() {
 
               <Typography variant="caption" display="block" align="center" sx={{fontSize: '10px'}}>--------------------------------</Typography>
 
-              {/* INFO VENTA */}
               <Box display="flex" justifyContent="space-between" alignItems="center">
                  <Typography variant="body2" fontWeight="bold" sx={{fontSize: '12px'}}>* NOTA DE VENTA *</Typography>
                  <Typography variant="body2" fontWeight="bold" sx={{fontSize: '12px'}}>Folio:{folio}</Typography>
@@ -390,7 +411,6 @@ export default function POS() {
               
               <Divider sx={{ my: 0.5, borderStyle: 'solid', borderColor: '#000' }} />
 
-              {/* TABLA PRODUCTOS */}
               <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid black' }}>
@@ -405,7 +425,7 @@ export default function POS() {
                   {cart.map((item) => (
                     <tr key={item.id}>
                       <td valign="top" align="center" style={{fontWeight:'bold'}}>{item.quantity}</td>
-                      <td valign="top">PZA</td> {/* U.Med dummy por ahora */}
+                      <td valign="top">PZA</td> 
                       <td valign="top">
                           <div style={{fontWeight:'bold'}}>{item.id}</div>
                           <div>{item.name}</div>
@@ -422,7 +442,6 @@ export default function POS() {
                   <Typography sx={{fontSize: '16px', fontWeight:'900'}}>${total.toFixed(2)}</Typography>
               </Box>
 
-              {/* DESGLOSE PAGO */}
               {paymentMethod === 'EFECTIVO' ? (
                   <Box>
                     <Box display="flex" justifyContent="space-between">
