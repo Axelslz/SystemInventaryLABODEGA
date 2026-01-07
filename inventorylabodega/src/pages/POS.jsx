@@ -55,12 +55,22 @@ export default function POS() {
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
+    
+    const pRetail = parseFloat(product.priceRetail);
+    const pWholesale = parseFloat(product.priceWholesale);
+
     if (existingItem) {
       updateQuantity(product.id, existingItem.quantity + 1);
     } else {
-      const initialPrice = (1 >= product.wholesaleQty) ? product.priceWholesale : product.priceRetail;
+      const initialPrice = (1 >= product.wholesaleQty) ? pWholesale : pRetail;
+      
       setCart([...cart, { 
-        ...product, quantity: 1, price: initialPrice, isWholesale: (1 >= product.wholesaleQty)
+        ...product, 
+        quantity: 1, 
+        price: initialPrice, 
+        priceRetail: pRetail, 
+        priceWholesale: pWholesale,
+        isWholesale: (1 >= product.wholesaleQty)
       }]);
     }
   };
@@ -69,8 +79,12 @@ export default function POS() {
     if (newQty < 1) return;
     setCart(cart.map(item => {
       if (item.id === id) {
+        const pRetail = parseFloat(item.priceRetail);
+        const pWholesale = parseFloat(item.priceWholesale);
+
         const isWholesale = newQty >= item.wholesaleQty;
-        const currentPrice = isWholesale ? item.priceWholesale : item.priceRetail;
+        const currentPrice = isWholesale ? pWholesale : pRetail;
+        
         return { ...item, quantity: newQty, price: currentPrice, isWholesale: isWholesale };
       }
       return item;
@@ -85,9 +99,10 @@ export default function POS() {
 
   const change = (parseFloat(amountPaid) || 0) - total;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => { // <--- 1. Agregamos 'async' aquí
     if (cart.length === 0) return;
     
+    // Preparamos los datos visuales para el Ticket y para el envío
     const saleData = {
         ...customer,
         seller: seller,
@@ -95,34 +110,43 @@ export default function POS() {
         cart: cart,
         total: total,
         amountPaid: parseFloat(amountPaid) || total,
-        change: change > 0 ? change : 0
+        change: change > 0 ? change : 0,
+        date: new Date().toLocaleDateString('es-MX') // Agregamos fecha visual
     };
 
     if (window.confirm(`¿Imprimir ticket para ${customer.name}?`)) {
-      const saleRecord = addSale(cart, total, customer); 
-      printTicket(saleRecord, saleData); 
       
-      setCart([]);
-      setTotal(0);
-      setAmountPaid('');
-      setCustomer({
-        name: 'PÚBLICO EN GENERAL',
-        address: 'DOMICILIO CONOCIDO',
-        location: 'TUXTLA GTZ, CHIAPAS',
-        phone: ''
-      });
+      const success = await addSale(cart, total, customer, seller, paymentMethod); 
+      
+      if (success) {
+        const saleRecord = {
+            id: Date.now(), 
+            date: new Date().toLocaleDateString('es-MX'),
+            items: cart,
+            total: total
+        };
+
+        printTicket(saleRecord, saleData); 
+        setCart([]);
+        setTotal(0);
+        setAmountPaid('');
+        setCustomer({
+          name: 'PÚBLICO EN GENERAL',
+          address: 'DOMICILIO CONOCIDO',
+          location: 'TUXTLA GTZ, CHIAPAS',
+          phone: ''
+        });
+      } 
     }
   };
 
-  // --- FUNCIÓN MEJORADA PARA EL TAMAÑO DE LETRA DE LA TABLA ---
   const getTableFontSize = (value) => {
-    const str = value.toString(); // Convierte el número a texto (ej: "3040.00")
+    const str = value.toString(); 
     
-    // Lógica más agresiva para números grandes
-    if (str.length > 9) return '10px'; // Ej: 10,000.00 (muy pequeño)
-    if (str.length > 7) return '11px'; // Ej: 1,000.00
-    if (str.length > 6) return '12px'; // Ej: 500.00
-    return '13px';                     // Normal
+    if (str.length > 9) return '10px'; 
+    if (str.length > 7) return '11px'; 
+    if (str.length > 6) return '12px'; 
+    return '13px';                     
   };
 
   return (
