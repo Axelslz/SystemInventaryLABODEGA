@@ -21,7 +21,6 @@ const VENDEDORES = [
 export default function POS() {
   const { products, addSale, sales } = useInventory();
   const theme = useTheme();
-  // eslint-disable-next-line no-unused-vars
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,10 +98,9 @@ export default function POS() {
 
   const change = (parseFloat(amountPaid) || 0) - total;
 
-  const handleCheckout = async () => { // <--- 1. Agregamos 'async' aquí
+  const handleCheckout = async () => { 
     if (cart.length === 0) return;
     
-    // Preparamos los datos visuales para el Ticket y para el envío
     const saleData = {
         ...customer,
         seller: seller,
@@ -111,7 +109,7 @@ export default function POS() {
         total: total,
         amountPaid: parseFloat(amountPaid) || total,
         change: change > 0 ? change : 0,
-        date: new Date().toLocaleDateString('es-MX') // Agregamos fecha visual
+        date: new Date().toLocaleDateString('es-MX') 
     };
 
     if (window.confirm(`¿Imprimir ticket para ${customer.name}?`)) {
@@ -158,14 +156,9 @@ export default function POS() {
       flexDirection: 'column',
       overflow: 'hidden'
     }}>
-      
-      {/* IMPORTANTE: Aquí se definen los anchos.
-         La suma de los 'md' debe ser 12.
-         2 (catálogo) + 4 (carrito) + 3 (datos) + 3 (ticket) = 12 
-      */}
       <Grid container spacing={2} sx={{ height: '100%', width: '100%', m: 0 }}>
         
-        {/* ---------------- COLUMNA 1: CATÁLOGO (Ancho: 2) ---------------- */}
+        {/* ---------------- COLUMNA 1: CATÁLOGO ---------------- */}
         <Grid size={{ xs: 12, md: 2 }} sx={{ height: '100%', pl: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="subtitle1" gutterBottom color="primary" fontWeight="bold">
@@ -195,10 +188,10 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* ---------------- COLUMNA 2: CARRITO (Ancho: 4 - Reducido para dar espacio) ---------------- */}
+        {/* ---------------- COLUMNA 2: CARRITO ---------------- */}
         <Grid size={{ xs: 12, md: 4 }} sx={{ height: '100%' }}> 
           <Paper elevation={2} sx={{ 
-            p: 2, // Padding reducido un poco para aprovechar espacio
+            p: 2, 
             height: '100%', 
             display: 'flex', 
             flexDirection: 'column',
@@ -224,7 +217,6 @@ export default function POS() {
               <Table stickyHeader size="small" aria-label="tabla carrito" sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    {/* Anchos definidos en % para que no bailen */}
                     <TableCell sx={{ width: '35%', pl:1, py:1, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Producto</TableCell>
                     <TableCell align="center" sx={{ width: '20%', p:0, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Cant.</TableCell>
                     <TableCell align="right" sx={{ width: '30%', pr:1, fontWeight: 'bold', fontSize:'11px', bgcolor:'#eee' }}>Total</TableCell>
@@ -265,12 +257,11 @@ export default function POS() {
                           />
                         </TableCell>
 
-                        {/* CELDA TOTAL CON AJUSTE DINÁMICO */}
                         <TableCell align="right" sx={{ 
                           pr:1, 
                           fontWeight: 'bold', 
-                          fontSize: getTableFontSize(rowTotal), // <--- La magia del tamaño
-                          whiteSpace: 'nowrap', // <--- Importante: evita que baje de línea
+                          fontSize: getTableFontSize(rowTotal), 
+                          whiteSpace: 'nowrap', 
                           color: '#333'
                         }}>
                           ${rowTotal}
@@ -306,7 +297,7 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* ---------------- COLUMNA 3: DATOS TICKET (Ancho: 3 - Aumentado drásticamente) ---------------- */}
+        {/* ---------------- COLUMNA 3: DATOS TICKET ---------------- */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff', overflowY: 'auto' }}>
             <Typography variant="subtitle1" gutterBottom color="secondary" fontWeight="bold">
@@ -384,7 +375,7 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* ---------------- COLUMNA 4: VISTA PREVIA (Ancho: 3) ---------------- */}
+        {/* ---------------- COLUMNA 4: VISTA PREVIA ---------------- */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: '100%' }}>
           <Paper elevation={4} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#424242', color: 'white' }}>
             <Typography variant="subtitle1" gutterBottom sx={{color: '#fff', fontWeight:'bold', display:'flex', alignItems:'center', gap:1}}>

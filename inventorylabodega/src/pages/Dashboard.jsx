@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { AttachMoney, TrendingUp, Inventory, CalendarMonth } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
-import { format, subDays, isSameDay, parseISO } from 'date-fns';
+import { format, subDays, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function Dashboard() {
@@ -33,26 +33,46 @@ export default function Dashboard() {
     let totalCostoGlobal = 0;
     let ventasHoy = 0;
 
+    if (!sales || !Array.isArray(sales)) {
+      return {
+        chartData: last7Days,
+        totalVentas: 0,
+        totalCosto: 0,
+        gananciaNeta: 0,
+        ventasHoy: 0
+      };
+    }
+
     sales.forEach(sale => {
-      const saleDate = sale.date instanceof Date ? sale.date : new Date(sale.date || Date.now());
+      const dateString = sale.createdAt || sale.date || new Date();
+      const saleDate = new Date(dateString);
+
+      const productsList = sale.SaleItems || sale.items || sale.cart || [];
+
       let saleCost = 0;
-      sale.cart.forEach(item => {
-        const itemCost = item.cost || (item.price * 0.70); 
-        saleCost += itemCost * item.quantity;
+      let saleTotal = parseFloat(sale.total) || 0; 
+
+      productsList.forEach(item => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity) || 1;
+        
+        const itemCost = item.cost ? parseFloat(item.cost) : (price * 0.70); 
+        
+        saleCost += itemCost * quantity;
       });
 
-      const saleProfit = sale.total - saleCost;
+      const saleProfit = saleTotal - saleCost;
 
-      totalVentasGlobal += sale.total;
+      totalVentasGlobal += saleTotal;
       totalCostoGlobal += saleCost;
 
       if (isSameDay(saleDate, today)) {
-        ventasHoy += sale.total;
+        ventasHoy += saleTotal;
       }
 
       const dayStat = last7Days.find(d => isSameDay(d.date, saleDate));
       if (dayStat) {
-        dayStat.ventas += sale.total;
+        dayStat.ventas += saleTotal;
         dayStat.costo += saleCost;
         dayStat.ganancia += saleProfit;
       }
@@ -88,7 +108,7 @@ export default function Dashboard() {
             value={stats.totalCosto} 
             icon={<Inventory fontSize="large" />}
             color={theme.palette.warning.main}
-            subtitle="Costo de mercancía vendida"
+            subtitle="Costo est. mercancía vendida"
           />
         </Grid>
 
@@ -99,7 +119,7 @@ export default function Dashboard() {
             value={stats.gananciaNeta} 
             icon={<TrendingUp fontSize="large" />}
             color={theme.palette.primary.main}
-            subtitle="Utilidad real"
+            subtitle="Utilidad real estimada"
           />
         </Grid>
 
@@ -199,7 +219,7 @@ function KPICard({ title, value, icon, color, subtitle }) {
               {title}
             </Typography>
             <Typography variant="h4" component="div" fontWeight="800">
-              ${value?.toFixed(2)}
+              ${value?.toFixed(2) || '0.00'}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
               {subtitle}

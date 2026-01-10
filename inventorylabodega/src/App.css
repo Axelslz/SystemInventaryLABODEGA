@@ -2,7 +2,7 @@
   width: 100%;
   margin: 0;
   padding: 0;
-  text-align: left; /* Importante para que no centre textos por defecto */
+  text-align: left; 
 }
 
 .logo {

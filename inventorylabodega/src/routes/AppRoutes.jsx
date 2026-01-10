@@ -6,7 +6,7 @@ import POS from '../pages/POS';
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/inventory" element={<Inventory />} />
       <Route path="/pos" element={<POS />} />
       <Route path="*" element={<h2>404 - Página no encontrada</h2>} />

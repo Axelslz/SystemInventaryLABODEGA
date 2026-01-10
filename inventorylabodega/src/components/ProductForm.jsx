@@ -18,7 +18,6 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
     if (initialData) {
       setFormData(initialData);
     } else {
-      // Si no hay datos, limpiamos el formulario
       setFormData({ name: '', stock: '', price: '', cost: '' });
     }
   }, [initialData, open]);
@@ -43,7 +42,6 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth> 
-      {/* Cambié maxWidth a 'md' para que quepan mejor los inputs */}
       <DialogTitle>{initialData ? 'Editar Material' : 'Nuevo Material'}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -58,7 +56,6 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
               />
             </Grid>
             
-            {/* Primera fila: Stock y Costo */}
             <Grid item xs={6}>
               <TextField
                 label="Stock Disponible"
@@ -77,7 +74,6 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
               />
             </Grid>
 
-            {/* Segunda fila: Precios de Venta */}
             <Grid item xs={4}>
               <TextField
                 label="Precio Menudeo"

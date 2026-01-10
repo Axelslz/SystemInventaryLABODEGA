@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-  Box, Typography, Button, Table, TableBody, TableCell, // <--- Quitamos Container, dejamos Box
+  Box, Typography, Button, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, IconButton 
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
@@ -38,7 +38,6 @@ export default function Inventory() {
   };
 
   return (
-    // CAMBIO IMPORTANTE: Usamos Box con width 100% en lugar de Container
     <Box sx={{ p: 3, width: '100%' }}> 
       
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
