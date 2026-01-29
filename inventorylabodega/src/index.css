@@ -1,31 +1,28 @@
 :root {
-  font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
-  /* Variables de color base */
   color-scheme: light;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-/* RESET GLOBAL IMPORTANTE */
+/* RESET ESTRICTO */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body {
+/* Agregamos html aquí para asegurar la altura completa */
+html, body {
   width: 100%;
-  min-height: 100vh;
-  overflow-x: hidden; /* MATA EL SCROLL HORIZONTAL */
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Evita que la ventana principal tenga scroll */
   background-color: #f4f6f8;
 }
 
-/* Estilizar scrollbars para que se vean modernos */
+/* Scrollbars bonitos */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -39,10 +36,5 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #9e9e9e;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
 }
 

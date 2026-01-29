@@ -15,10 +15,7 @@ const convertImageToBase64 = async (url) => {
   }
 };
 
-export const printTicket = async (saleData, customerInfo) => {
-
-  const logoBase64 = await convertImageToBase64(LOGO_FERRE);
-
+const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
   };
@@ -28,99 +25,122 @@ export const printTicket = async (saleData, customerInfo) => {
   const clientLocation = customerInfo?.location || "TUXTLA GTZ, CHIAPAS";
   const clientPhone = customerInfo?.phone ? `Tel: ${customerInfo.phone}` : "";
   const paymentType = saleData.paymentMethod || "EFECTIVO";
+  const sellerName = saleData.seller || "CAJA 1"; 
 
-  const ticketContent = `
+  return `
     <html>
       <head>
         <title>Ticket La Bodega</title>
         <style>
-          @page { size: 100mm auto; margin: 0mm; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           
-          body {
-            font-family: 'Arial', sans-serif;
-            font-size: 11px;
-            width: 100%;
-            max-width: 64mm; 
-            margin: 2mm auto; 
-            color: black;
-            text-transform: uppercase;
-            line-height: 1.2;
+          @page { 
+            size: 80mm auto; 
+            margin: 0mm;     
           }
 
-          .header { text-align: center; margin-bottom: 5px; }
-          
-          /* Estilo para el Logo */
-          .logo-img {
-            width: 100px;      /* Tamaño ajustado */
-            height: auto;
-            display: block;
-            margin: 0 auto 5px auto; /* Centrado */
-            filter: grayscale(100%); /* Opcional: imprimir mejor en b/n */
+          body { 
+            font-family: 'Arial', sans-serif; 
+            font-size: 11px; 
+            width: 74mm; 
+            margin: 0 auto; 
+            padding: 2mm;   
+            color: black; 
+            text-transform: uppercase; 
+            line-height: 1.2; 
+            background-color: #fff; 
           }
 
-          .title { font-size: 18px; font-weight: 800; margin: 0; }
+          .center { text-align: center; }
+          .right { text-align: right; }
+          .left { text-align: left; }
+          .bold { font-weight: bold; }
+          
+          /* HEADER */
+          .header { margin-bottom: 5px; width: 100%; }
+          .logo-img { 
+            width: 60px; 
+            height: auto; 
+            display: block; 
+            margin: 0 auto 5px auto; 
+            filter: grayscale(100%); 
+          }
+          .title { font-size: 14px; font-weight: 800; margin: 2px 0; }
           .subtitle { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
-          .address-shop { font-size: 9px; text-align: center; }
-          
-          .divider-double { border-top: 2px double #000; margin: 5px 0; }
+          .address-shop { font-size: 9px; margin-bottom: 5px;}
+
+          /* DIVIDERS */
+          .divider-double { border-top: 1px double #000; border-bottom: 1px solid #000; height: 3px; margin: 5px 0; }
           .divider-dashed { border-top: 1px dashed #000; margin: 5px 0; }
 
-          .client-info { text-align: left; font-size: 11px; margin: 8px 0; font-weight: bold; }
-          .client-details { font-weight: normal; font-size: 10px; }
+          /* INFO CLIENTE */
+          .client-info { margin: 8px 0; font-size: 11px; }
+          .client-details { font-weight: normal; font-size: 10px; display: block; margin-top: 2px;}
 
-          .folio-row { display: flex; justify-content: space-between; font-weight: bold; margin: 5px 0; font-size: 12px; }
-          
-          .meta-info { font-size: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; }
+          /* FOLIO Y FECHA */
+          .folio-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 12px; }
+          .meta-info { font-size: 9px; margin-bottom: 5px; display: flex; justify-content: space-between; }
 
-          table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-          th { border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 10px; padding: 2px 0; text-align: left;}
+          /* TABLA DE PRODUCTOS */
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 5px; 
+            table-layout: fixed; 
+          }
+          th { border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 9px; padding: 2px 0; text-align: left;}
           td { padding: 4px 0; vertical-align: top; font-size: 10px; }
           
-          .col-qty { width: 10%; text-align: center; font-weight: bold; }
-          .col-desc { width: 65%; text-align: left; padding-left: 2px; overflow: hidden; }
-          .col-price { width: 25%; text-align: right; white-space: nowrap; }
+          .col-qty { width: 12%; text-align: center; }
+          .col-desc { 
+            width: 63%; 
+            text-align: left; 
+            padding-right: 2px;
+            white-space: normal; 
+            overflow-wrap: break-word; 
+          }
+          .col-price { width: 25%; text-align: right; }
 
-          .total-section { text-align: right; margin-top: 10px; font-size: 16px; font-weight: 800; }
-          
-          .payment-info { text-align: right; font-size: 11px; font-weight: bold; margin-top: 2px; }
+          /* TOTALES */
+          .total-section { text-align: right; margin-top: 10px; font-size: 16px; font-weight: 800; border-top: 1px solid #000; padding-top: 5px;}
+          .payment-info { text-align: right; font-size: 10px; font-weight: bold; margin-top: 2px; }
 
-          .footer { text-align: center; margin-top: 15px; font-size: 10px; font-weight: bold; }
+          /* FOOTER */
+          .footer { margin-top: 15px; font-size: 10px; }
           .footer-small { font-size: 9px; font-weight: normal; margin-top: 5px; }
+          .copy-label { font-size: 10px; margin-bottom: 5px; }
         </style>
       </head>
       <body>
-        
-        <div class="header">
+        <div class="header center">
           ${logoBase64 ? `<img src="${logoBase64}" class="logo-img" />` : ''}
-          
           <div class="title">LA BODEGA</div>
           <div class="subtitle">MATERIALES PARA LA CONSTRUCCIÓN<br>Y GALVANIZADOS</div>
           <div class="address-shop">1A PTE SUR S/N ENTRE 1A Y 2A SUR<br>COL EL JOBO</div>
         </div>
-
+        
         <div class="divider-double"></div>
-
-        <div class="client-info">
-          ${clientName}<br/>
+        <div class="copy-label center">*** ${copyLabel} ***</div>
+        
+        <div class="client-info left">
+          <span class="bold">${clientName}</span>
           <span class="client-details">
-            ${clientAddress}<br/>
-            ${clientLocation}<br/>
-            ${clientPhone}
+            ${clientAddress}<br/>${clientLocation}<br/>${clientPhone}
           </span>
         </div>
-
+        
         <div class="divider-dashed"></div>
-
-        <div class="folio-row">
-          <span>* NOTA DE VENTA *</span>
+        
+        <div class="folio-row bold">
+          <span>NOTA DE VENTA</span>
           <span>FOLIO: F${saleData.id || '---'}</span>
         </div>
         
         <div class="meta-info">
           <span>${new Date(saleData.date).toLocaleDateString('es-MX')} ${new Date(saleData.date).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}</span>
-          <span>VENDEDOR: CAJA 1</span>
+          <span>VEND: ${sellerName}</span>
         </div>
-
+        
         <table>
           <thead>
             <tr>
@@ -132,49 +152,69 @@ export const printTicket = async (saleData, customerInfo) => {
           <tbody>
             ${saleData.items.map(item => `
               <tr>
-                <td class="col-qty">${item.quantity}</td>
-                <td class="col-desc">
-                  ${item.name} 
-                  ${item.isWholesale ? '(MY)' : ''}
-                </td>
+                <td class="col-qty bold">${item.quantity}</td>
+                <td class="col-desc">${item.name} ${item.isWholesale ? '(MY)' : ''}</td>
                 <td class="col-price">${formatCurrency(item.price * item.quantity)}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
-
-        <div class="total-section">
-          TOTAL ${formatCurrency(saleData.total)}
-        </div>
         
-        <div class="payment-info">
-           PAGO: ${paymentType}
-        </div>
+        <div class="total-section">TOTAL: ${formatCurrency(saleData.total)}</div>
+        <div class="payment-info">PAGO: ${paymentType}</div>
         
-        <div class="footer">
-          ** GRACIAS POR SU COMPRA **<br/>
-          SOLICITE SU FACTURA EL MISMO DÍA
-          <br/><br/>
-          - NO SE ACEPTAN DEVOLUCIONES -
-          <div class="footer-small">
-            TELS. 961 182 1679 Y 961 690 5168<br/>
-            labodegaeljobo@hotmail.com
-          </div>
+        <div class="footer center bold">
+          <div style="margin-bottom: 5px;">** GRACIAS POR SU COMPRA **</div>
+          SOLICITE SU FACTURA EL MISMO DÍA<br/>- NO SE ACEPTAN DEVOLUCIONES -
+          <div class="footer-small">TELS. 961 182 1679 Y 961 690 5168<br/>labodegaeljobo@hotmail.com</div>
         </div>
       </body>
     </html>
   `;
+};
 
-  const printWindow = window.open('', '_blank', 'width=300,height=600');
-  if (printWindow) {
-    printWindow.document.write(ticketContent);
-    printWindow.document.close();
-    
-    printWindow.onload = function() {
-      printWindow.focus();
-      setTimeout(() => { 
-          printWindow.print();  
-      }, 500);
+const triggerPrintJob = (htmlContent) => {
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'absolute';
+    iframe.style.width = '0px';
+    iframe.style.height = '0px';
+    iframe.style.border = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    iframe.onload = function() {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print(); 
+        } catch (e) {
+            console.error("Error al imprimir:", e);
+        }
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+            resolve();
+        }, 500);
     };
-  }
+  });
+};
+
+export const printTicket = async (saleData, customerInfo) => {
+  const logoBase64 = await convertImageToBase64(LOGO_FERRE);
+  
+  const htmlCliente = getTicketHTML(logoBase64, saleData, customerInfo, "COPIA CLIENTE");
+  await triggerPrintJob(htmlCliente);
+
+  setTimeout(async () => {
+      const htmlTienda = getTicketHTML(logoBase64, saleData, customerInfo, "COPIA TIENDA");
+      await triggerPrintJob(htmlTienda);
+  }, 1000); 
+};
+
+export const generateTicketHTML = async (saleData, customerInfo) => {
+  const logoBase64 = await convertImageToBase64(LOGO_FERRE);
+  return getTicketHTML(logoBase64, saleData, customerInfo, "VISTA PREVIA");
 };
