@@ -4,10 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { InventoryProvider } from './context/InventoryContext';
 import { MaintenanceProvider } from './context/MaintenanceContext'; 
-
 import Navbar from './components/Navbar';
 import ProtectedRoute from './routes/ProtectedRoute';
-
 import Login from './pages/Login';
 import POS from './pages/POS';
 import Inventory from './pages/Inventory';

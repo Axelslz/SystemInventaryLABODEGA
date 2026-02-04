@@ -25,7 +25,7 @@ export default function POS() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(0); 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [vendedoresList, setVendedoresList] = useState([]);
@@ -84,7 +84,7 @@ export default function POS() {
         setPreviewHtml(html);
     };
     updatePreview();
-  }, [cart, total, customer, paymentMethod, seller]);
+  }, [cart, total, customer, paymentMethod, seller]); 
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
@@ -114,6 +114,19 @@ export default function POS() {
     }));
   };
 
+  // --- Actualizar Precio Unitario Manualmente ---
+  const updatePrice = (id, newPrice) => {
+    const val = parseFloat(newPrice);
+    if (isNaN(val) || val < 0) return; 
+
+    setCart(cart.map(item => {
+        if (item.id === id) {
+            return { ...item, price: val };
+        }
+        return item;
+    }));
+  };
+
   const removeFromCart = (id) => setCart(cart.filter(item => item.id !== id));
   const handleCustomerChange = (e) => setCustomer({ ...customer, [e.target.name]: e.target.value });
   
@@ -139,15 +152,18 @@ export default function POS() {
   const handleFinalConfirmCheckout = async () => {
     const saleData = {
         ...customer, seller, paymentMethod, items: cart,
-        total, amountPaid: parseFloat(amountPaid) || total, change: change > 0 ? change : 0, 
+        total: total, 
+        amountPaid: parseFloat(amountPaid) || total, 
+        change: change > 0 ? change : 0, 
         date: today 
     };
 
     const success = await addSale(cart, total, customer, seller, paymentMethod); 
     
     if (success) {
-        const saleRecord = { id: Date.now(), date: today, items: cart, total };
+        const saleRecord = { id: Date.now(), date: today, items: cart, total: total };
         printTicket(saleRecord, saleData); 
+        
         setCart([]); setTotal(0); setAmountPaid('');
         setPaymentMethod('EFECTIVO'); 
         setCustomer({ name: 'PÚBLICO EN GENERAL', address: 'DOMICILIO CONOCIDO', location: 'TUXTLA GTZ, CHIAPAS', phone: '' });
@@ -174,13 +190,6 @@ export default function POS() {
   const getTableFontSize = (value) => {
     const str = value.toString(); 
     return str.length > 9 ? '10px' : str.length > 7 ? '11px' : '12px';                     
-  };
-
-  const getQtyFontSize = (qty) => {
-    const len = qty.toString().length;
-    if (len > 4) return '12px'; 
-    if (len > 3) return '14px'; 
-    return '18px';              
   };
 
   return (
@@ -225,8 +234,8 @@ export default function POS() {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ width: '30%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Producto</TableCell>
-                    <TableCell align="right" sx={{ width: '15%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Precio U.</TableCell>
                     <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Cant.</TableCell>
+                    <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Precio U.</TableCell>
                     <TableCell align="right" sx={{ width: '20%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Total</TableCell>
                     <TableCell sx={{ width: '10%', py:1, bgcolor:'#eee' }} />
                   </TableRow>
@@ -239,27 +248,32 @@ export default function POS() {
                         {item.isWholesale && <Chip label="MAYOREO" color="secondary" size="small" sx={{fontSize:9, height:16}} />}
                       </TableCell>
                       
-                      <TableCell align="right" sx={{ py: 0.5 }}>
-                        <Typography variant="caption" sx={{ fontSize: '12px', color: '#555' }}>
-                            ${item.price.toFixed(2)}
-                        </Typography>
-                      </TableCell>
-
+                      {/* Cantidad */}
                       <TableCell align="center" sx={{ py: 0.5 }}>
                         <TextField 
                             type="number" 
                             variant="standard" 
                             value={item.quantity} 
                             onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)} 
+                            inputProps={{ style: { textAlign: 'center', fontWeight: 'bold' } }} 
+                            sx={{ width: '50px' }} 
+                        />
+                      </TableCell>
+
+                      {/* Precio Unitario Editable */}
+                      <TableCell align="center" sx={{ py: 0.5 }}>
+                        <TextField 
+                            type="number" 
+                            variant="standard" 
+                            value={item.price} 
+                            onChange={(e) => updatePrice(item.id, e.target.value)} 
                             inputProps={{ 
-                                style: { 
-                                    textAlign: 'center', 
-                                    fontWeight: 'bold', 
-                                    padding: 2,
-                                    fontSize: getQtyFontSize(item.quantity)
-                                } 
+                                style: { textAlign: 'center', fontSize: '13px', color: '#1976d2' } 
                             }} 
-                            sx={{ width: '100%', maxWidth: '70px' }} 
+                            InputProps={{
+                                startAdornment: <Typography variant="caption" sx={{mr:0.5}}>$</Typography>
+                            }}
+                            sx={{ width: '70px' }} 
                         />
                       </TableCell>
                       
@@ -280,8 +294,15 @@ export default function POS() {
 
             <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
               <Box display="flex" justifyContent="space-between">
-                <Typography variant="body2" fontWeight="bold">TOTAL:</Typography>
-                <Typography variant="h5" fontWeight="900" color="primary">${total.toFixed(2)}</Typography>
+                <Box>
+                    <Typography variant="body2" fontWeight="bold">TOTAL A PAGAR:</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                       {cart.length} Artículos
+                    </Typography>
+                </Box>
+                <Typography variant="h5" fontWeight="900" color="primary">
+                    ${total.toFixed(2)}
+                </Typography>
               </Box>
             </Box>
           </Paper>
@@ -319,11 +340,7 @@ export default function POS() {
               </FormControl>
 
               <Button 
-                variant="outlined" 
-                color="warning" 
-                size="small" 
-                fullWidth 
-                startIcon={<AssignmentInd />}
+                variant="outlined" color="warning" size="small" fullWidth startIcon={<AssignmentInd />}
                 onClick={() => setDebtorsOpen(true)}
                 sx={{ mt: 1, mb: 1, fontWeight: 'bold' }}
               >
@@ -331,7 +348,22 @@ export default function POS() {
               </Button>
 
               {paymentMethod === 'EFECTIVO' && (
-                 <TextField label="Pagan con:" type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} size="small" fullWidth color="success" placeholder="$ 0.00" InputProps={{ sx: { fontSize: 18, fontWeight: 'bold' } }} />
+                <Box>
+                      <TextField 
+                        label="Pagan con:" 
+                        type="number" 
+                        value={amountPaid} 
+                        onChange={(e) => setAmountPaid(e.target.value)} 
+                        size="small" fullWidth color="success" 
+                        placeholder="$ 0.00" 
+                        InputProps={{ sx: { fontSize: 18, fontWeight: 'bold' } }} 
+                      />
+                      {amountPaid && (
+                        <Typography variant="caption" sx={{ display:'block', mt:0.5, textAlign:'right', fontWeight:'bold', color: change >= 0 ? 'green' : 'red' }}>
+                            Cambio: ${change.toFixed(2)}
+                        </Typography>
+                      )}
+                </Box>
               )}
             </Box>
           </Paper>
@@ -357,7 +389,7 @@ export default function POS() {
               disabled={cart.length === 0} 
               sx={{ py: 1.5, fontWeight: 'bold', boxShadow: '0px 0px 15px rgba(102, 187, 106, 0.5)' }}
             >
-              COBRAR E IMPRIMIR
+              COBRAR ${total.toFixed(2)}
             </Button>
           </Paper>
         </Grid>

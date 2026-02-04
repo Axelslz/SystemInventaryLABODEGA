@@ -37,7 +37,6 @@ export default function Expenses({ type = 'store' }) {
   
   const [isCustomCategory, setIsCustomCategory] = useState(false); 
 
-  // --- ESTADOS NUEVOS PARA UI ---
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });

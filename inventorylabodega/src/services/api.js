@@ -1,17 +1,16 @@
 import axios from 'axios';
 
-// const URL_BACKEND = 'https://systeminventorylabodegaback.onrender.com/api'; 
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// const api = axios.create({
-//   baseURL: URL_BACKEND, 
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
+const URL_BACKEND = isLocal 
+  ? 'http://localhost:5000/api' 
+  : 'https://systeminventorylabodegaback.onrender.com/api';
+
+console.log("Conectando a:", URL_BACKEND); 
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', 
-  headers: {   
+  baseURL: URL_BACKEND, 
+  headers: {
     'Content-Type': 'application/json',
   },
 });

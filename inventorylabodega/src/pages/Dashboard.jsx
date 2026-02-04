@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { 
   AttachMoney, TrendingUp, Inventory, MoneyOff, CalendarMonth, 
-  DeleteForever, WarningAmberRounded // --- NUEVO: Icono de advertencia
+  DeleteForever, WarningAmberRounded 
 } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
 import { format, subDays, isSameDay } from 'date-fns';
@@ -21,7 +21,7 @@ import * as expenseService from '../services/expenseService';
 import { resetHistoryService } from '../services/saleService'; 
 
 export default function Dashboard() {
-  const { sales } = useInventory();
+  const { sales, products, loadSales } = useInventory(); 
   const theme = useTheme();
 
   const [expenses, setExpenses] = useState([]);
@@ -55,34 +55,28 @@ export default function Dashboard() {
     fetchAllExpenses();
   }, []);
 
-  const handleOpenConfirm = () => {
-    setOpenDialog(true);
-  };
- 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-  };
+  const handleOpenConfirm = () => setOpenDialog(true);
+  const handleCloseDialog = () => setOpenDialog(false);
 
   const handleConfirmReset = async () => {
     setLoadingReset(true);
     try {
         await resetHistoryService();
+        if(loadSales) await loadSales();
+        
         setOpenDialog(false);
         setSnackbar({ 
             open: true, 
-            message: '✅ Sistema reiniciado correctamente. Todo está limpio.', 
+            message: '✅ Sistema reiniciado correctamente.', 
             severity: 'success' 
         });
-        setTimeout(() => {
-            window.location.reload(); 
-        }, 1500);
-
+        setTimeout(() => { window.location.reload(); }, 1500);
     } catch (error) {
         console.error(error);
         setOpenDialog(false);
         setSnackbar({ 
             open: true, 
-            message: '❌ Error al reiniciar. Verifica la conexión.', 
+            message: '❌ Error al reiniciar.', 
             severity: 'error' 
         });
     } finally {
@@ -107,6 +101,8 @@ export default function Dashboard() {
     let totalCostoMercancia = 0;
     let ventasHoy = 0;
 
+    const currentProducts = Array.isArray(products) ? products : [];
+
     if (sales && Array.isArray(sales)) {
         sales.forEach(sale => {
             const dateString = sale.createdAt || sale.date || new Date();
@@ -119,11 +115,28 @@ export default function Dashboard() {
             productsList.forEach(item => {
                 const price = parseFloat(item.price) || 0;
                 const quantity = parseInt(item.quantity) || 1;
-                const itemCost = item.cost ? parseFloat(item.cost) : (price * 0.70); 
-                saleCost += itemCost * quantity;
+                
+                let unitCost = 0;
+
+                const idToSearch = item.ProductId || item.id;
+
+                const productInDb = currentProducts.find(p => String(p.id) === String(idToSearch));
+
+                if (productInDb && productInDb.cost) {
+                    unitCost = parseFloat(productInDb.cost);
+                } 
+                else if (item.cost) {
+                    unitCost = parseFloat(item.cost);
+                } 
+                else {
+                    unitCost = price * 0.70;
+                }
+                
+                saleCost += unitCost * quantity;
             });
 
             const saleProfit = saleTotal - saleCost;
+            
             totalVentasGlobal += saleTotal;
             totalCostoMercancia += saleCost;
 
@@ -165,7 +178,7 @@ export default function Dashboard() {
       ventasHoy,
       pieChartData: gastosPorTipo.filter(x => x.value > 0)
     };
-  }, [sales, expenses]);
+  }, [sales, expenses, products]); 
 
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
@@ -181,9 +194,7 @@ export default function Dashboard() {
          </Box>
          
          <Button 
-            variant="outlined" 
-            color="error" 
-            startIcon={<DeleteForever />}
+            variant="outlined" color="error" startIcon={<DeleteForever />}
             onClick={handleOpenConfirm} 
             sx={{ fontWeight: 'bold', borderColor: '#ef5350', color: '#ef5350' }}
          >
@@ -218,9 +229,7 @@ export default function Dashboard() {
         </Paper>
       </Box>
 
-      {/* 3. GRÁFICAS */}
       <Grid container spacing={3}>
-        {/* A) BARRAS */}
         <Grid item xs={12} md={8}>
           <Paper elevation={3} sx={{ p: 3, height: '400px', display:'flex', flexDirection:'column' }}>
             <Typography variant="h6" gutterBottom color="text.secondary">Flujo de Caja Semanal</Typography>
@@ -330,22 +339,11 @@ export default function Dashboard() {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Estás a punto de borrar <b>TODAS las ventas y gastos</b> registrados en el sistema.
-            <br /><br />
-            <ul>
-                <li>El dashboard volverá a $0.00.</li>
-                <li>El historial de transacciones se perderá permanentemente.</li>
-                <li><b>Tus productos y usuarios NO se borrarán.</b></li>
-            </ul>
-            <Typography color="error" fontWeight="bold" sx={{ mt: 2 }}>
-                Esta acción es irreversible.
-            </Typography>
+            Estás a punto de borrar <b>TODAS las ventas y gastos</b>. Esta acción es irreversible.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog} color="primary" variant="outlined" autoFocus>
-            Cancelar
-          </Button>
+          <Button onClick={handleCloseDialog} color="primary" variant="outlined" autoFocus>Cancelar</Button>
           <Button 
             onClick={handleConfirmReset} 
             color="error" 

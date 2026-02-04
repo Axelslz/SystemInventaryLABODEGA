@@ -104,7 +104,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
                 fullWidth
                 required
                 helperText="Costo por pieza"
-                inputProps={{ min: 0, step: "0.01" }}
+                inputProps={{ min: 0, step: "any" }}
                 InputProps={{
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                 }}
@@ -153,7 +153,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
                 onChange={handleChange}
                 fullWidth
                 required
-                inputProps={{ min: 0, step: "0.01" }}
+                inputProps={{ min: 0, step: "any" }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
@@ -165,7 +165,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData }) 
                 onChange={handleChange}
                 fullWidth
                 required
-                inputProps={{ min: 0, step: "0.01" }}
+                inputProps={{ min: 0, step: "any" }}
               />
             </Grid>
             <Grid item xs={12} sm={4}>
