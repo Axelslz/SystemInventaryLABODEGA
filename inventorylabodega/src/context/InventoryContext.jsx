@@ -58,9 +58,9 @@ export const InventoryProvider = ({ children }) => {
       } catch (error) { console.error(error); }
   };
     
-  const addSale = async (cart, total, customer, seller, paymentMethod) => {
-    try {
-        const saleData = { cart, total, customer, seller, paymentMethod };
+  const addSale = async (cart, total, customer, seller, paymentMethod, ticketNumber) => {
+    try { 
+        const saleData = { cart, total, customer, seller, paymentMethod, ticketNumber };
 
         const response = await createSaleService(saleData); 
 

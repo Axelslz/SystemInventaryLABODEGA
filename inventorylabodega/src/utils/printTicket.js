@@ -27,6 +27,10 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
   const paymentType = saleData.paymentMethod || "EFECTIVO";
   const sellerName = saleData.seller || "CAJA 1"; 
 
+  // --- LÓGICA DE FOLIO ---
+  // Si hay ticketNumber manual úsalo, si no, usa "F-" + id de sistema
+  const folioDisplay = saleData.ticketNumber ? `${saleData.ticketNumber}` : `F-${saleData.id || '---'}`;
+
   return `
     <html>
       <head>
@@ -56,7 +60,6 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
           .left { text-align: left; }
           .bold { font-weight: bold; }
           
-          /* HEADER */
           .header { margin-bottom: 5px; width: 100%; }
           .logo-img { 
             width: 60px; 
@@ -69,19 +72,15 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
           .subtitle { font-size: 10px; font-weight: bold; margin-bottom: 3px; }
           .address-shop { font-size: 9px; margin-bottom: 5px;}
 
-          /* DIVIDERS */
           .divider-double { border-top: 1px double #000; border-bottom: 1px solid #000; height: 3px; margin: 5px 0; }
           .divider-dashed { border-top: 1px dashed #000; margin: 5px 0; }
 
-          /* INFO CLIENTE */
           .client-info { margin: 8px 0; font-size: 11px; }
           .client-details { font-weight: normal; font-size: 10px; display: block; margin-top: 2px;}
 
-          /* FOLIO Y FECHA */
           .folio-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 12px; }
           .meta-info { font-size: 9px; margin-bottom: 5px; display: flex; justify-content: space-between; }
 
-          /* TABLA DE PRODUCTOS */
           table { 
             width: 100%; 
             border-collapse: collapse; 
@@ -101,11 +100,9 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
           }
           .col-price { width: 25%; text-align: right; }
 
-          /* TOTALES */
           .total-section { text-align: right; margin-top: 10px; font-size: 16px; font-weight: 800; border-top: 1px solid #000; padding-top: 5px;}
           .payment-info { text-align: right; font-size: 10px; font-weight: bold; margin-top: 2px; }
 
-          /* FOOTER */
           .footer { margin-top: 15px; font-size: 10px; }
           .footer-small { font-size: 9px; font-weight: normal; margin-top: 5px; }
           .copy-label { font-size: 10px; margin-bottom: 5px; }
@@ -133,7 +130,7 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
         
         <div class="folio-row bold">
           <span>NOTA DE VENTA</span>
-          <span>FOLIO: F${saleData.id || '---'}</span>
+          <span>FOLIO: ${folioDisplay}</span>
         </div>
         
         <div class="meta-info">

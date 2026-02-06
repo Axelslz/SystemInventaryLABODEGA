@@ -34,6 +34,8 @@ export default function POS() {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false); 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); 
 
+  const [manualFolio, setManualFolio] = useState('');
+
   useEffect(() => {
     const fetchSellers = async () => {
       try {
@@ -78,13 +80,14 @@ export default function POS() {
             total: total, 
             paymentMethod: paymentMethod,
             seller: seller,
-            date: new Date() 
+            date: new Date(),
+            ticketNumber: manualFolio // Pasamos el folio a la vista previa
         };
         const html = await generateTicketHTML(tempSaleData, customer);
         setPreviewHtml(html);
     };
     updatePreview();
-  }, [cart, total, customer, paymentMethod, seller]); 
+  }, [cart, total, customer, paymentMethod, seller, manualFolio]); 
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
@@ -114,7 +117,6 @@ export default function POS() {
     }));
   };
 
-  // --- Actualizar Precio Unitario Manualmente ---
   const updatePrice = (id, newPrice) => {
     const val = parseFloat(newPrice);
     if (isNaN(val) || val < 0) return; 
@@ -155,16 +157,27 @@ export default function POS() {
         total: total, 
         amountPaid: parseFloat(amountPaid) || total, 
         change: change > 0 ? change : 0, 
-        date: today 
+        date: today,
+        ticketNumber: manualFolio 
     };
 
-    const success = await addSale(cart, total, customer, seller, paymentMethod); 
+    const success = await addSale(cart, total, customer, seller, paymentMethod, manualFolio); 
     
     if (success) {
-        const saleRecord = { id: Date.now(), date: today, items: cart, total: total };
+      
+        const saleRecord = { 
+            id: manualFolio || "PROCESANDO...", 
+            date: today, 
+            items: cart, 
+            total: total,
+            paymentMethod: paymentMethod,  
+            seller: seller,               
+            ticketNumber: manualFolio
+        };
+        
         printTicket(saleRecord, saleData); 
         
-        setCart([]); setTotal(0); setAmountPaid('');
+        setCart([]); setTotal(0); setAmountPaid(''); setManualFolio('');
         setPaymentMethod('EFECTIVO'); 
         setCustomer({ name: 'PÚBLICO EN GENERAL', address: 'DOMICILIO CONOCIDO', location: 'TUXTLA GTZ, CHIAPAS', phone: '' });
         setOpenConfirmDialog(false);
@@ -202,6 +215,7 @@ export default function POS() {
       
       <Grid container spacing={2} sx={{ height: '100%', width: '100%', m: 0 }}>
         
+        {/* COLUMNA 1: CATÁLOGO */}
         <Grid size={{ xs: 12, md: 2 }} sx={{ height: isMobile ? '500px' : '100%', pl: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="bold">1. CATÁLOGO</Typography>
@@ -222,6 +236,7 @@ export default function POS() {
           </Paper>
         </Grid>
 
+        {/* COLUMNA 2: CARRITO */}
         <Grid size={{ xs: 12, md: 4 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}> 
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
@@ -248,7 +263,6 @@ export default function POS() {
                         {item.isWholesale && <Chip label="MAYOREO" color="secondary" size="small" sx={{fontSize:9, height:16}} />}
                       </TableCell>
                       
-                      {/* Cantidad */}
                       <TableCell align="center" sx={{ py: 0.5 }}>
                         <TextField 
                             type="number" 
@@ -260,7 +274,6 @@ export default function POS() {
                         />
                       </TableCell>
 
-                      {/* Precio Unitario Editable */}
                       <TableCell align="center" sx={{ py: 0.5 }}>
                         <TextField 
                             type="number" 
@@ -308,6 +321,7 @@ export default function POS() {
           </Paper>
         </Grid>
 
+        {/* COLUMNA 3: DATOS TICKET */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <Typography variant="subtitle2" gutterBottom color="secondary" fontWeight="bold">3. DATOS TICKET</Typography>
@@ -365,10 +379,23 @@ export default function POS() {
                       )}
                 </Box>
               )}
+
+              {/* AQUÍ ESTÁ EL CAMPO NUEVO PARA EL FOLIO MANUAL */}
+              <TextField 
+                label="Folio Manual (Opcional)" 
+                value={manualFolio} 
+                onChange={(e) => setManualFolio(e.target.value)} 
+                size="small" fullWidth 
+                placeholder="Ej. A-1050" 
+                InputProps={{ sx: { fontWeight: 'bold', color: '#d32f2f' } }} 
+                sx={{ mt: 1 }}
+              />
+
             </Box>
           </Paper>
         </Grid>
 
+        {/* COLUMNA 4: VISTA PREVIA */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}>
           <Paper elevation={4} sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#424242', color: 'white' }}>
             <Typography variant="subtitle2" gutterBottom sx={{color: '#fff', fontWeight:'bold', display:'flex', alignItems:'center', gap:1}}>
