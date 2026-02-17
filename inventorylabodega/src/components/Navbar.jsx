@@ -32,15 +32,18 @@ const Navbar = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
 
-  if (!user) return null;
-
+  // --- 1. DECLARAMOS TODOS LOS HOOKS PRIMERO (ANTES DE CUALQUIER RETURN) ---
   const [anchorEl, setAnchorEl] = useState(null);
-  const openUserMenu = Boolean(anchorEl);
   const [expensesAnchorEl, setExpensesAnchorEl] = useState(null);
-  const openExpensesDesktop = Boolean(expensesAnchorEl);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileGastosOpen, setMobileGastosOpen] = useState(false);
 
+  // Variables derivadas
+  const openUserMenu = Boolean(anchorEl);
+  const openExpensesDesktop = Boolean(expensesAnchorEl);
+  const isExpensesActive = location.pathname.includes('/expenses');
+
+  // Handlers
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleCloseUserMenu = () => setAnchorEl(null);
   const handleLogout = () => { handleCloseUserMenu(); logout(); };
@@ -49,15 +52,17 @@ const Navbar = () => {
   const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
   const handleMobileGastosToggle = () => setMobileGastosOpen(!mobileGastosOpen);
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'Inventario', icon: <InventoryIcon />, path: '/inventory' },
-    { text: 'Punto de Venta', icon: <PointOfSaleIcon />, path: '/pos' },
-    { text: 'Mantenimiento', icon: <BuildIcon />, path: '/maintenance' },
-    { text: 'Gastos', icon: <ReceiptIcon />, path: null, isDropdown: true }, 
+  const allMenuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin'] }, 
+    { text: 'Inventario', icon: <InventoryIcon />, path: '/inventory', roles: ['admin', 'empleado'] }, 
+    { text: 'Punto de Venta', icon: <PointOfSaleIcon />, path: '/pos', roles: ['admin', 'empleado'] }, 
+    { text: 'Mantenimiento', icon: <BuildIcon />, path: '/maintenance', roles: ['admin'] }, 
+    { text: 'Gastos', icon: <ReceiptIcon />, path: null, isDropdown: true, roles: ['admin'] }, 
   ];
-  
-  const isExpensesActive = location.pathname.includes('/expenses');
+  const userRole = user?.role || 'empleado';
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
+
+  if (!user) return null;
 
   const drawerContent = (
     <Box sx={{ width: 280, height: '100%', bgcolor: '#f5f5f5' }}>
@@ -83,18 +88,18 @@ const Navbar = () => {
                 </ListItem>
                 <Collapse in={mobileGastosOpen} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding sx={{ bgcolor: '#e3f2fd' }}>
-                     <ListItemButton component={RouterLink} to="/expenses/store" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
+                      <ListItemButton component={RouterLink} to="/expenses/store" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
                         <ListItemIcon><StoreIcon fontSize="small" /></ListItemIcon>
                         <ListItemText primary="Gastos de Tienda" />
-                     </ListItemButton>
-                     <ListItemButton component={RouterLink} to="/expenses/warehouse" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
+                      </ListItemButton>
+                      <ListItemButton component={RouterLink} to="/expenses/warehouse" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
                         <ListItemIcon><WarehouseIcon fontSize="small" /></ListItemIcon>
                         <ListItemText primary="Gastos de Bodega" />
-                     </ListItemButton>
-                     <ListItemButton component={RouterLink} to="/expenses/payroll" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
+                      </ListItemButton>
+                      <ListItemButton component={RouterLink} to="/expenses/payroll" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
                         <ListItemIcon><GroupsIcon fontSize="small" /></ListItemIcon>
                         <ListItemText primary="Nómina" />
-                     </ListItemButton>
+                      </ListItemButton>
                   </List>
                 </Collapse>
               </React.Fragment>

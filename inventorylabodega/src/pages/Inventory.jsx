@@ -7,12 +7,18 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, AttachMoney, WarningAmberRounded } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
+import { useAuth } from '../context/AuthContext'; // <--- IMPORTAMOS AUTH
 import ProductForm from '../components/ProductForm';
 
 export default function Inventory() {
   const { products, deleteProduct, addProduct, updateProduct } = useInventory();
+  const { user } = useAuth(); // <--- OBTENEMOS EL USUARIO
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Verificamos si es admin
+  const isAdmin = user?.role === 'admin';
+
   const [openModal, setOpenModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -83,34 +89,40 @@ export default function Inventory() {
                 Inventario
             </Typography>
             
-            <Chip 
-                icon={<AttachMoney />} 
-                label={`Inversión Total: $${totalInversionInventario.toFixed(2)}`} 
-                color="success" 
-                variant="outlined" 
-                sx={{ 
-                    fontWeight: 'bold', 
-                    fontSize: { xs: '0.9rem', sm: '1.1rem' }, 
-                    py: 2.5, px: 1, 
-                    backgroundColor: '#e8f5e9',
-                    width: { xs: '100%', sm: 'auto' } 
-                }}
-            />
+            {/* Solo mostramos la inversión al ADMIN */}
+            {isAdmin && (
+              <Chip 
+                  icon={<AttachMoney />} 
+                  label={`Inversión Total: $${totalInversionInventario.toFixed(2)}`} 
+                  color="success" 
+                  variant="outlined" 
+                  sx={{ 
+                      fontWeight: 'bold', 
+                      fontSize: { xs: '0.9rem', sm: '1.1rem' }, 
+                      py: 2.5, px: 1, 
+                      backgroundColor: '#e8f5e9',
+                      width: { xs: '100%', sm: 'auto' } 
+                  }}
+              />
+            )}
         </Box>
 
-        <Button 
-          variant="contained" 
-          startIcon={<Add />} 
-          onClick={handleOpenCreate}
-          size="large"
-          sx={{ 
+        {/* Botón Nuevo Producto: SOLO ADMIN */}
+        {isAdmin && (
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={handleOpenCreate}
+            size="large"
+            sx={{ 
               fontWeight: 'bold', 
               display: { xs: 'none', sm: 'flex' }, 
               whiteSpace: 'nowrap'
-          }}
-        >
-          Nuevo Producto
-        </Button>
+            }}
+          >
+            Nuevo Producto
+          </Button>
+        )}
       </Box>
 
       <Paper elevation={3} sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -121,17 +133,22 @@ export default function Inventory() {
                 <TableCell sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Material</TableCell>
                 <TableCell sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Proveedor</TableCell>
                 <TableCell align="center" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Stock</TableCell>
-                <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Costo U.</TableCell>
-                <TableCell align="right" sx={{ backgroundColor: '#dcedc8', fontWeight: 'bold', color: '#33691e', display: { xs: 'none', sm: 'table-cell' } }}>Inversión</TableCell>
+                
+                {/* Costo e Inversión SOLO ADMIN */}
+                {isAdmin && <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Costo U.</TableCell>}
+                {isAdmin && <TableCell align="right" sx={{ backgroundColor: '#dcedc8', fontWeight: 'bold', color: '#33691e', display: { xs: 'none', sm: 'table-cell' } }}>Inversión</TableCell>}
+                
                 <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>P. Menudeo</TableCell>
                 <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>P. Mayoreo</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Acciones</TableCell>
+                
+                {/* Columna Acciones SOLO ADMIN */}
+                {isAdmin && <TableCell align="center" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Acciones</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 5, color: 'text.secondary' }}>
+                  <TableCell colSpan={isAdmin ? 8 : 5} align="center" sx={{ py: 5, color: 'text.secondary' }}>
                     No hay productos registrados
                   </TableCell>
                 </TableRow>
@@ -168,11 +185,13 @@ export default function Inventory() {
                                 </Box>
                             </TableCell>
 
-                            <TableCell align="right">${costoU.toFixed(2)}</TableCell>
-                            
-                            <TableCell align="right" sx={{ fontWeight:'bold', color: '#33691e', bgcolor:'#f1f8e9', display: { xs: 'none', sm: 'table-cell' } }}>
-                                ${totalInv}
-                            </TableCell>
+                            {/* Costo e Inversión SOLO ADMIN */}
+                            {isAdmin && <TableCell align="right">${costoU.toFixed(2)}</TableCell>}
+                            {isAdmin && (
+                              <TableCell align="right" sx={{ fontWeight:'bold', color: '#33691e', bgcolor:'#f1f8e9', display: { xs: 'none', sm: 'table-cell' } }}>
+                                  ${totalInv}
+                              </TableCell>
+                            )}
                             
                             <TableCell align="right" sx={{ color: '#1976d2' }}>
                                 ${row.priceRetail}
@@ -182,12 +201,15 @@ export default function Inventory() {
                                 ${row.priceWholesale}
                             </TableCell>
                             
-                            <TableCell align="center">
-                                <Box display="flex" justifyContent="center">
-                                    <IconButton color="primary" onClick={() => handleOpenEdit(row)} size="small"><Edit fontSize="small"/></IconButton>
-                                    <IconButton color="error" onClick={() => handleDeleteClick(row.id)} size="small"><Delete fontSize="small"/></IconButton>
-                                </Box>
-                            </TableCell>
+                            {/* Botones de Acción SOLO ADMIN */}
+                            {isAdmin && (
+                              <TableCell align="center">
+                                  <Box display="flex" justifyContent="center">
+                                      <IconButton color="primary" onClick={() => handleOpenEdit(row)} size="small"><Edit fontSize="small"/></IconButton>
+                                      <IconButton color="error" onClick={() => handleDeleteClick(row.id)} size="small"><Delete fontSize="small"/></IconButton>
+                                  </Box>
+                              </TableCell>
+                            )}
                         </TableRow>
                     );
                 })
@@ -197,20 +219,24 @@ export default function Inventory() {
         </TableContainer>
       </Paper>
 
-      <Fab 
-        color="primary" 
-        aria-label="add" 
-        onClick={handleOpenCreate}
-        sx={{ 
-            position: 'fixed', 
-            bottom: 20, 
-            right: 20, 
-            display: { xs: 'flex', sm: 'none' } 
-        }}
-      >
-        <Add />
-      </Fab>
+      {/* FAB flotante para móvil SOLO ADMIN */}
+      {isAdmin && (
+        <Fab 
+          color="primary" 
+          aria-label="add" 
+          onClick={handleOpenCreate}
+          sx={{ 
+              position: 'fixed', 
+              bottom: 20, 
+              right: 20, 
+              display: { xs: 'flex', sm: 'none' } 
+          }}
+        >
+          <Add />
+        </Fab>
+      )}
 
+      {/* Componentes de Modal solo se renderizan, la lógica de no abrirlos está en los botones */}
       <ProductForm 
         open={openModal} 
         handleClose={() => setOpenModal(false)} 

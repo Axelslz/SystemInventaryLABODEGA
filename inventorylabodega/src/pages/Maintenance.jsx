@@ -21,19 +21,27 @@ export default function Maintenance() {
     type: 'servicio',
     description: '',
     cost: '',
-    date: new Date().toISOString().split('T')[0] 
+    date: new Date().toISOString().split('T')[0],
+    mileage: ''
   });
 
   const handleSubmit = () => {
     addRecord(formData);
     setOpen(false);
-    setFormData({ ...formData, description: '', cost: '' }); 
+    setFormData({ 
+        vehicle: '', // Limpiamos también el vehículo por comodidad
+        type: 'servicio', 
+        description: '', 
+        cost: '', 
+        date: new Date().toISOString().split('T')[0],
+        mileage: ''
+    }); 
   };
 
-  const totalGeneral = records.reduce((acc, curr) => acc + parseFloat(curr.cost), 0);
-  const totalCombustible = records.filter(r => r.type === 'combustible').reduce((acc, curr) => acc + parseFloat(curr.cost), 0);
-  const totalServicios = records.filter(r => r.type === 'servicio').reduce((acc, curr) => acc + parseFloat(curr.cost), 0);
-  const totalRefacciones = records.filter(r => r.type === 'refaccion').reduce((acc, curr) => acc + parseFloat(curr.cost), 0);
+  const totalGeneral = records.reduce((acc, curr) => acc + parseFloat(curr.cost || 0), 0);
+  const totalCombustible = records.filter(r => r.type === 'combustible').reduce((acc, curr) => acc + parseFloat(curr.cost || 0), 0);
+  const totalServicios = records.filter(r => r.type === 'servicio').reduce((acc, curr) => acc + parseFloat(curr.cost || 0), 0);
+  const totalRefacciones = records.filter(r => r.type === 'refaccion').reduce((acc, curr) => acc + parseFloat(curr.cost || 0), 0);
 
   const getFilteredRecords = () => {
     if (tabValue === 0) return records;
@@ -127,6 +135,13 @@ export default function Maintenance() {
               <TableRow>
                 <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Vehículo</TableCell>
+                
+                {/* --- NUEVO: COLUMNA KILOMETRAJE SOLO SI ES TAB DE COMBUSTIBLE (Índice 1) --- */}
+                {tabValue === 1 && (
+                    <TableCell sx={{ fontWeight: 'bold' }}>Kilometraje</TableCell>
+                )}
+                {/* ------------------------------------------------------------------------- */}
+
                 <TableCell sx={{ fontWeight: 'bold' }}>Concepto</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Tipo</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>Costo</TableCell>
@@ -145,6 +160,15 @@ export default function Maintenance() {
                         </Typography>
                     )}
                   </TableCell>
+
+                  {/* --- NUEVO: CELDA DE DATOS PARA KILOMETRAJE --- */}
+                  {tabValue === 1 && (
+                    <TableCell>
+                        {row.mileage ? `${row.mileage} km` : '-'}
+                    </TableCell>
+                  )}
+                  {/* --------------------------------------------- */}
+
                   <TableCell sx={{ minWidth: '150px' }}>{row.description}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     <Chip 
@@ -170,7 +194,7 @@ export default function Maintenance() {
               ))}
               {getFilteredRecords().length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                  <TableCell colSpan={tabValue === 1 ? 7 : 6} align="center" sx={{ py: 3 }}>
                     No hay registros en esta categoría
                   </TableCell>
                 </TableRow>
@@ -222,6 +246,21 @@ export default function Maintenance() {
                 <MenuItem value="combustible">Combustible</MenuItem>
               </TextField>
             </Grid>
+            
+            {/* INPUT DE KILOMETRAJE EN EL FORMULARIO */}
+            {formData.type === 'combustible' && (
+              <Grid item xs={12} sm={6}>
+                <TextField 
+                  type="number" 
+                  label="Kilometraje Actual (KM)" 
+                  fullWidth 
+                  value={formData.mileage}
+                  onChange={(e) => setFormData({...formData, mileage: e.target.value})}
+                  placeholder="Ej. 125000"
+                />
+              </Grid>
+            )}
+
             <Grid item xs={12} sm={6}>
               <TextField 
                 type="date" 
