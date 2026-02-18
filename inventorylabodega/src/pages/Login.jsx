@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Box, Paper, TextField, Button, Alert } from '@mui/material';
+import logoImg from '../assets/Logo.png'; 
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -23,79 +25,88 @@ const Login = () => {
   };
 
   return (
-    <div style={{ 
-      height: '100vh', 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      backgroundColor: '#f3f4f6' 
-    }}>
-      <div style={{ 
-        backgroundColor: 'white', 
-        padding: '2rem', 
-        borderRadius: '10px', 
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#1f2937' }}>
-          Sistema La Bodega
-        </h2>
+    <Box 
+      sx={{ 
+        height: '100vh', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        bgcolor: 'background.default', 
+        p: 2 
+      }}
+    >
+      <Paper 
+        elevation={6} 
+        sx={{ 
+          p: 4, 
+          borderRadius: 3, 
+          width: '100%', 
+          maxWidth: '400px',
+          bgcolor: 'background.paper'
+        }}
+      >
+        
+        {/* --- 2. Reemplazamos las letras por tu logo centrado --- */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+          <Box 
+            component="img" 
+            src={logoImg} 
+            alt="Logo Ferre La Bodega" 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '250px', // Puedes subir o bajar este número si lo quieres más grande o pequeño
+              height: 'auto',
+              objectFit: 'contain'
+            }} 
+          />
+        </Box>
 
         {error && (
-          <div style={{ 
-            backgroundColor: '#fee2e2', 
-            color: '#b91c1c', 
-            padding: '0.75rem', 
-            borderRadius: '5px', 
-            marginBottom: '1rem',
-            textAlign: 'center'
-          }}>
+          <Alert severity="error" sx={{ mb: 3 }}>
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Usuario</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '5px', border: '1px solid #d1d5db' }}
-              required
-            />
-          </div>
+          <TextField
+            label="Usuario"
+            variant="outlined"
+            fullWidth
+            required
+            margin="normal"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Contraseña</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '5px', border: '1px solid #d1d5db' }}
-              required
-            />
-          </div>
+          <TextField
+            label="Contraseña"
+            type="password"
+            variant="outlined"
+            fullWidth
+            required
+            margin="normal"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            sx={{ mb: 4 }}
+          />
 
-          <button 
+          <Button 
             type="submit" 
-            style={{ 
-              width: '100%', 
-              padding: '0.75rem', 
-              backgroundColor: '#2563eb', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '5px', 
-              fontWeight: 'bold', 
-              cursor: 'pointer' 
+            variant="contained" 
+            color="primary" 
+            fullWidth 
+            size="large"
+            sx={{ 
+              py: 1.5, 
+              fontWeight: 'bold',
+              borderRadius: 2
             }}
           >
             INGRESAR
-          </button>
+          </Button>
         </form>
-      </div>
-    </div>
+      </Paper>
+    </Box>
   );
 };
 

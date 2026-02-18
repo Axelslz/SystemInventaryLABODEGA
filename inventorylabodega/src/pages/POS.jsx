@@ -15,21 +15,26 @@ import {
 import { useInventory } from '../context/InventoryContext';
 import SalesHistory from '../components/SalesHistory';
 import { printTicket, generateTicketHTML } from '../utils/printTicket';
-import { getSellersRequest } from '../services/sellerService';
 import { markSaleAsPaidService } from '../services/saleService';
 import DebtorsModal from '../components/DebtorsModal';
+import { getUsersRequest } from '../services/authService';
+import { useThemeMode } from '../context/ThemeContext'; // Mantenerlo para colores
 
 export default function POS() {
   const { products, addSale, sales } = useInventory();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
+  
+  // Extraemos solo el modo para colores dinámicos
+  const { mode } = useThemeMode();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [cart, setCart] = useState([]);
   const [total, setTotal] = useState(0); 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState('');
   const [vendedoresList, setVendedoresList] = useState([]);
-  const [seller, setSeller] = useState(''); 
+  const [seller, setSeller] = useState('');
   const [debtorsOpen, setDebtorsOpen] = useState(false);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false); 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); 
@@ -39,18 +44,17 @@ export default function POS() {
   useEffect(() => {
     const fetchSellers = async () => {
       try {
-        const res = await getSellersRequest();
-        const lista = res.data;
+        const lista = await getUsersRequest(); 
         if (lista && lista.length > 0) {
           setVendedoresList(lista);
-          setSeller(lista[0].name); 
+          setSeller(lista[0].username); 
         } else {
-          setVendedoresList([{ id: 0, name: 'ADMINISTRADOR' }]);
+          setVendedoresList([{ id: 0, username: 'ADMINISTRADOR' }]);
           setSeller('ADMINISTRADOR');
         }
       } catch (error) {
-        console.error("Error cargando vendedores", error);
-        setVendedoresList([{ id: 0, name: 'ADMINISTRADOR' }]);
+        console.error("Error cargando usuarios", error);
+        setVendedoresList([{ id: 0, username: 'ADMINISTRADOR' }]);
         setSeller('ADMINISTRADOR');
       }
     };
@@ -81,7 +85,7 @@ export default function POS() {
             paymentMethod: paymentMethod,
             seller: seller,
             date: new Date(),
-            ticketNumber: manualFolio // Pasamos el folio a la vista previa
+            ticketNumber: manualFolio
         };
         const html = await generateTicketHTML(tempSaleData, customer);
         setPreviewHtml(html);
@@ -164,7 +168,6 @@ export default function POS() {
     const success = await addSale(cart, total, customer, seller, paymentMethod, manualFolio); 
     
     if (success) {
-      
         const saleRecord = { 
             id: manualFolio || "PROCESANDO...", 
             date: today, 
@@ -202,14 +205,19 @@ export default function POS() {
 
   const getTableFontSize = (value) => {
     const str = value.toString(); 
-    return str.length > 9 ? '10px' : str.length > 7 ? '11px' : '12px';                     
+    return str.length > 9 ? '10px' : str.length > 7 ? '11px' : '12px';                    
   };
+
+  // Variables dinámicas para el Modo Oscuro
+  const headerBgColor = mode === 'dark' ? '#333' : '#eee';
+  const tableContainerBgColor = mode === 'dark' ? '#1e1e1e' : '#fafafa';
+  const tableBorderColor = mode === 'dark' ? '#444' : '#eee';
+  const totalBoxBgColor = mode === 'dark' ? '#1e3a5f' : '#e3f2fd'; 
 
   return (
     <Container maxWidth={false} disableGutters sx={{ 
       height: isMobile ? 'auto' : 'calc(100vh - 85px)', 
       p: 1.5,
-      bgcolor: '#f4f6f8', 
       display: 'flex', flexDirection: 'column', overflow: 'hidden'
     }}>
       
@@ -244,15 +252,15 @@ export default function POS() {
               <Button size="small" startIcon={<History />} onClick={() => setHistoryOpen(true)}>Historial</Button>
             </Box>
             
-            <TableContainer sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: '#fafafa', border: '1px solid #eee', borderRadius: 1, mb: 2 }}>
+            <TableContainer sx={{ flexGrow: 1, overflowY: 'auto', bgcolor: tableContainerBgColor, border: `1px solid ${tableBorderColor}`, borderRadius: 1, mb: 2 }}>
               <Table stickyHeader size="small" sx={{ tableLayout: 'fixed' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '30%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Producto</TableCell>
-                    <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Cant.</TableCell>
-                    <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Precio U.</TableCell>
-                    <TableCell align="right" sx={{ width: '20%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor:'#eee' }}>Total</TableCell>
-                    <TableCell sx={{ width: '10%', py:1, bgcolor:'#eee' }} />
+                    <TableCell sx={{ width: '30%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor: headerBgColor }}>Producto</TableCell>
+                    <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor: headerBgColor }}>Cant.</TableCell>
+                    <TableCell align="center" sx={{ width: '25%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor: headerBgColor }}>Precio U.</TableCell>
+                    <TableCell align="right" sx={{ width: '20%', py:1, fontWeight:'bold', fontSize:'11px', bgcolor: headerBgColor }}>Total</TableCell>
+                    <TableCell sx={{ width: '10%', py:1, bgcolor: headerBgColor }} />
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -305,7 +313,7 @@ export default function POS() {
               </Table>
             </TableContainer>
 
-            <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+            <Box sx={{ p: 2, bgcolor: totalBoxBgColor, borderRadius: 1 }}>
               <Box display="flex" justifyContent="space-between">
                 <Box>
                     <Typography variant="body2" fontWeight="bold">TOTAL A PAGAR:</Typography>
@@ -330,8 +338,8 @@ export default function POS() {
                 <InputLabel>Vendedor</InputLabel>
                 <Select value={seller} label="Vendedor" onChange={(e) => setSeller(e.target.value)} sx={{fontSize:'12px'}}>
                   {vendedoresList.map((v) => (
-                    <MenuItem key={v.id} value={v.name} sx={{fontSize:'12px'}}>
-                      {v.name}
+                    <MenuItem key={v.id} value={v.username} sx={{fontSize:'12px'}}>
+                      {v.username.toUpperCase()}
                     </MenuItem>
                   ))}
                 </Select>
@@ -380,7 +388,6 @@ export default function POS() {
                 </Box>
               )}
 
-              {/* AQUÍ ESTÁ EL CAMPO NUEVO PARA EL FOLIO MANUAL */}
               <TextField 
                 label="Folio Manual (Opcional)" 
                 value={manualFolio} 

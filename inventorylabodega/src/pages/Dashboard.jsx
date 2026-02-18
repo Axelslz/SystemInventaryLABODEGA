@@ -3,7 +3,7 @@ import {
   Container, Grid, Paper, Typography, Box, 
   Card, CardContent, Divider, useTheme, CircularProgress, Chip, Button,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, 
-  Snackbar, Alert 
+  Snackbar, Alert, MenuItem, Select, FormControl, InputLabel 
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
@@ -11,10 +11,10 @@ import {
 } from 'recharts';
 import { 
   AttachMoney, TrendingUp, Inventory, MoneyOff, CalendarMonth, 
-  DeleteForever, WarningAmberRounded 
+  DeleteForever, WarningAmberRounded, FilterAlt 
 } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
-import { format, subDays, isSameDay } from 'date-fns';
+import { format, subDays, isSameDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 import * as expenseService from '../services/expenseService';
@@ -29,6 +29,9 @@ export default function Dashboard() {
   const [openDialog, setOpenDialog] = useState(false); 
   const [loadingReset, setLoadingReset] = useState(false); 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); 
+  
+  // NUEVO: Estado para el filtro de tiempo
+  const [timeFilter, setTimeFilter] = useState('week'); // 'week', 'month', 'all'
 
   useEffect(() => {
     const fetchAllExpenses = async () => {
@@ -88,6 +91,23 @@ export default function Dashboard() {
  
   const stats = useMemo(() => {
     const today = new Date();
+    
+    // --- Lógica para determinar el rango de fechas basado en el filtro ---
+    let startDate, endDate;
+    if (timeFilter === 'week') {
+        // startOfWeek usa domingo por defecto, {weekStartsOn: 1} lo cambia a Lunes si prefieres
+        startDate = startOfWeek(today, { weekStartsOn: 1 }); 
+        endDate = endOfWeek(today, { weekStartsOn: 1 });
+    } else if (timeFilter === 'month') {
+        startDate = startOfMonth(today);
+        endDate = endOfMonth(today);
+    } else { // 'all'
+        // Fechas extremas para que incluya todo
+        startDate = new Date(2000, 0, 1); 
+        endDate = new Date(2100, 0, 1);
+    }
+
+    // Datos para las gráficas (siempre mostramos los últimos 7 días como panorama rápido)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = subDays(today, 6 - i);
       return {
@@ -107,6 +127,10 @@ export default function Dashboard() {
         sales.forEach(sale => {
             const dateString = sale.createdAt || sale.date || new Date();
             const saleDate = new Date(dateString);
+            
+            // Verificamos si la venta cae dentro de nuestro rango de filtro
+            const isWithinFilterRange = isWithinInterval(saleDate, { start: startDate, end: endDate });
+
             const productsList = sale.SaleItems || sale.items || sale.cart || [];
 
             let saleCost = 0;
@@ -115,20 +139,15 @@ export default function Dashboard() {
             productsList.forEach(item => {
                 const price = parseFloat(item.price) || 0;
                 const quantity = parseInt(item.quantity) || 1;
-                
                 let unitCost = 0;
-
                 const idToSearch = item.ProductId || item.id;
-
                 const productInDb = currentProducts.find(p => String(p.id) === String(idToSearch));
 
                 if (productInDb && productInDb.cost) {
                     unitCost = parseFloat(productInDb.cost);
-                } 
-                else if (item.cost) {
+                } else if (item.cost) {
                     unitCost = parseFloat(item.cost);
-                } 
-                else {
+                } else {
                     unitCost = price * 0.70;
                 }
                 
@@ -137,13 +156,18 @@ export default function Dashboard() {
 
             const saleProfit = saleTotal - saleCost;
             
-            totalVentasGlobal += saleTotal;
-            totalCostoMercancia += saleCost;
+            // Acumulamos para KPIs SOLO si está en el rango seleccionado
+            if (isWithinFilterRange) {
+                totalVentasGlobal += saleTotal;
+                totalCostoMercancia += saleCost;
+            }
 
+            // Datos para el KPI de "Hoy" (independiente del filtro)
             if (isSameDay(saleDate, today)) {
                 ventasHoy += saleTotal;
             }
 
+            // Datos para las gráficas (Últimos 7 días fijos)
             const dayStat = last7Days.find(d => isSameDay(d.date, saleDate));
             if (dayStat) {
                 dayStat.ventas += saleTotal;
@@ -153,7 +177,13 @@ export default function Dashboard() {
         });
     }
 
-    const totalGastosOperativos = expenses.reduce((acc, item) => acc + item.amount, 0);
+    // Filtrar gastos por fecha
+    const gastosFiltrados = expenses.filter(exp => {
+         const expDate = new Date(exp.date || exp.createdAt || new Date());
+         return isWithinInterval(expDate, { start: startDate, end: endDate });
+    });
+
+    const totalGastosOperativos = gastosFiltrados.reduce((acc, item) => acc + item.amount, 0);
 
     const gastosPorTipo = [
         { name: 'Tienda', value: 0, color: '#2196f3' }, 
@@ -161,7 +191,7 @@ export default function Dashboard() {
         { name: 'Nómina', value: 0, color: '#ff9800' }  
     ];
 
-    expenses.forEach(exp => {
+    gastosFiltrados.forEach(exp => {
         const category = gastosPorTipo.find(g => g.name === exp.typeLabel);
         if (category) category.value += exp.amount;
     });
@@ -176,30 +206,51 @@ export default function Dashboard() {
       totalGastosOperativos: totalGastosOperativos,
       utilidadNetaReal: utilidadNetaReal,
       ventasHoy,
-      pieChartData: gastosPorTipo.filter(x => x.value > 0)
+      pieChartData: gastosPorTipo.filter(x => x.value > 0),
+      filterLabel: timeFilter === 'week' ? 'Esta Semana' : timeFilter === 'month' ? 'Este Mes' : 'Histórico General'
     };
-  }, [sales, expenses, products]); 
+  }, [sales, expenses, products, timeFilter]); // Agregamos timeFilter a las dependencias
 
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
       
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} mb={3} gap={2}>
          <Box>
             <Typography variant="h4" fontWeight="bold" color="text.primary">
                 Dashboard General
             </Typography>
             <Typography variant="body2" color="text.secondary">
-                Resumen financiero y operativo en tiempo real
+                Mostrando datos de: <b>{stats.filterLabel}</b>
             </Typography>
          </Box>
          
-         <Button 
-            variant="outlined" color="error" startIcon={<DeleteForever />}
-            onClick={handleOpenConfirm} 
-            sx={{ fontWeight: 'bold', borderColor: '#ef5350', color: '#ef5350' }}
-         >
-            Reiniciar Historial
-         </Button>
+         <Box display="flex" gap={2} alignItems="center">
+            {/* NUEVO: Selector de Filtro de Tiempo */}
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+                <InputLabel id="time-filter-label" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <FilterAlt fontSize="small" /> Filtro
+                </InputLabel>
+                <Select
+                    labelId="time-filter-label"
+                    value={timeFilter}
+                    label="Filtro de Tiempo"
+                    onChange={(e) => setTimeFilter(e.target.value)}
+                    sx={{ bgcolor: 'background.paper' }}
+                >
+                    <MenuItem value="week">Esta Semana</MenuItem>
+                    <MenuItem value="month">Este Mes</MenuItem>
+                    <MenuItem value="all">Todo Histórico</MenuItem>
+                </Select>
+            </FormControl>
+
+            <Button 
+                variant="outlined" color="error" startIcon={<DeleteForever />}
+                onClick={handleOpenConfirm} 
+                sx={{ fontWeight: 'bold', borderColor: '#ef5350', color: '#ef5350' }}
+            >
+                Reiniciar 
+            </Button>
+         </Box>
       </Box>
 
       <Grid container spacing={3} mb={2}>
@@ -218,12 +269,15 @@ export default function Dashboard() {
       </Grid>
 
       <Box sx={{ mb: 3 }}>
-        <Paper elevation={1} sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#e3f2fd', borderLeft: `4px solid ${theme.palette.info.main}` }}>
+        <Paper elevation={1} sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: theme.palette.mode === 'dark' ? 'rgba(2, 136, 209, 0.1)' : '#e3f2fd', borderLeft: `4px solid ${theme.palette.info.main}` 
+          }}
+        >
           <Box display="flex" alignItems="center" gap={2}>
             <CalendarMonth color="info" />
-            <Typography variant="subtitle1" fontWeight="bold" color="text.secondary">
+            <Typography variant="subtitle1" fontWeight="bold" color="text.primary">
               {format(new Date(), "dd 'de' MMMM", { locale: es })}
             </Typography>
+            
           </Box>
           <Chip label={`Ventas Hoy: $${stats.ventasHoy.toFixed(2)}`} color="info" sx={{ fontWeight: 'bold', fontSize: '1rem' }} />
         </Paper>
@@ -232,7 +286,7 @@ export default function Dashboard() {
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
           <Paper elevation={3} sx={{ p: 3, height: '400px', display:'flex', flexDirection:'column' }}>
-            <Typography variant="h6" gutterBottom color="text.secondary">Flujo de Caja Semanal</Typography>
+            <Typography variant="h6" gutterBottom color="text.secondary">Flujo de Caja Semanal (Últimos 7 días)</Typography>
             <Divider sx={{ mb: 2 }} />
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
@@ -267,7 +321,7 @@ export default function Dashboard() {
               </AreaChart>
             </ResponsiveContainer>
             <Box mt={2} textAlign="center">
-                <Typography variant="body2" color="text.secondary">Ganancia Bruta (7 días)</Typography>
+                <Typography variant="body2" color="text.secondary">Ganancia Bruta (Últimos 7 días)</Typography>
                 <Typography variant="h5" fontWeight="bold" color="primary">
                     ${stats.chartData.reduce((acc, curr) => acc + curr.ganancia, 0).toFixed(2)}
                 </Typography>
@@ -281,7 +335,7 @@ export default function Dashboard() {
                     <Grid item xs={12} md={4}>
                         <Typography variant="h6" color="error">Desglose de Gastos Operativos</Typography>
                         <Typography variant="body2" color="text.secondary" paragraph>
-                            Distribución de gastos acumulados (Nómina, Bodega, Tienda).
+                            Distribución de gastos correspondientes a: <b>{stats.filterLabel}</b>.
                         </Typography>
                         <Box sx={{ p: 2, bgcolor: '#ffebee', borderRadius: 2, border: '1px solid #ffcdd2', textAlign:'center' }}>
                             <Typography variant="overline" color="text.secondary" fontWeight="bold">TOTAL GASTADO</Typography>
@@ -297,7 +351,7 @@ export default function Dashboard() {
                         ) : stats.totalGastosOperativos === 0 ? (
                             <Box display="flex" justifyContent="center" alignItems="center" height="100%" flexDirection="column">
                                 <MoneyOff color="disabled" sx={{ fontSize: 50, mb:1 }} />
-                                <Typography color="text.secondary">No hay gastos registrados aún</Typography>
+                                <Typography color="text.secondary">No hay gastos en este periodo</Typography>
                             </Box>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
@@ -377,7 +431,7 @@ function KPICard({ title, value, icon, color, subtitle }) {
         <Box display="flex" justifyContent="space-between" alignItems="flex-start">
           <Box>
             <Typography color="text.secondary" gutterBottom variant="overline" fontWeight="bold">{title}</Typography>
-            <Typography variant="h4" component="div" fontWeight="800" sx={{ color: value < 0 ? '#d32f2f' : 'inherit' }}>
+            <Typography variant="h4" component="div" fontWeight="800" sx={{ color: value < 0 ? '#d32f2f' : 'text.primary' }}>
               ${value?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>{subtitle}</Typography>

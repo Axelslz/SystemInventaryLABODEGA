@@ -170,13 +170,14 @@ export default function Expenses({ type = 'store' }) {
 
       <Grid container spacing={2} mb={4}>
         <Grid item xs={12} sm={4}>
-          <Card sx={{ borderLeft: '5px solid #d32f2f' }}>
+          {/* Se cambió el border hardcodeado por propiedades compatibles con los temas */}
+          <Card sx={{ borderLeft: 5, borderColor: 'error.main', bgcolor: 'background.paper' }}>
             <CardContent>
               <Box display="flex" alignItems="center" gap={1} mb={1}>
                 <AttachMoney color="error" />
-                <Typography variant="subtitle2" color="textSecondary">Total {isPayroll ? 'Pagado' : 'Gastado'}</Typography>
+                <Typography variant="subtitle2" color="text.secondary">Total {isPayroll ? 'Pagado' : 'Gastado'}</Typography>
               </Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography variant="h4" fontWeight="bold" color="text.primary">
                 ${totalGasto.toFixed(2)}
               </Typography>
             </CardContent>
@@ -184,22 +185,24 @@ export default function Expenses({ type = 'store' }) {
         </Grid>
       </Grid>
 
-      <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden' }}>
+      {/* Agregado fondo de papel dinámico */}
+      <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
         <TableContainer sx={{ maxHeight: 500 }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Fecha</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>{isPayroll ? 'Empleado' : 'Categoría'}</TableCell>
-                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Descripción</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Monto</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Acciones</TableCell>
+                {/* Reemplazo de #f5f5f5 por action.selected y text.primary */}
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'action.selected', color: 'text.primary' }}>Fecha</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'action.selected', color: 'text.primary' }}>{isPayroll ? 'Empleado' : 'Categoría'}</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'action.selected', color: 'text.primary' }}>Descripción</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold', bgcolor: 'action.selected', color: 'text.primary' }}>Monto</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 'bold', bgcolor: 'action.selected', color: 'text.primary' }}>Acciones</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {records.map((row) => (
                 <TableRow key={row.id} hover>
-                  <TableCell>{row.date}</TableCell>
+                  <TableCell sx={{ color: 'text.primary' }}>{row.date}</TableCell>
                   <TableCell>
                     <Chip 
                         label={row.category} 
@@ -209,8 +212,9 @@ export default function Expenses({ type = 'store' }) {
                         icon={isPayroll ? <Groups fontSize="small"/> : undefined} 
                     />
                   </TableCell>
-                  <TableCell>{row.description}</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 'bold', color: '#d32f2f' }}>
+                  <TableCell sx={{ color: 'text.primary' }}>{row.description}</TableCell>
+                  {/* Reemplazo de color estático #d32f2f por error.main */}
+                  <TableCell align="right" sx={{ fontWeight: 'bold', color: 'error.main' }}>
                     - ${parseFloat(row.amount).toFixed(2)}
                   </TableCell>
                   <TableCell align="center">
@@ -233,7 +237,9 @@ export default function Expenses({ type = 'store' }) {
       </Paper>
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{isPayroll ? 'Registrar Pago de Nómina' : `Registrar Gasto - ${currentConfig.title}`}</DialogTitle>
+        <DialogTitle sx={{ color: 'text.primary' }}>
+          {isPayroll ? 'Registrar Pago de Nómina' : `Registrar Gasto - ${currentConfig.title}`}
+        </DialogTitle>
         <DialogContent dividers>
           <Box display="flex" flexDirection="column" gap={2} pt={1}>
             
@@ -305,16 +311,17 @@ export default function Expenses({ type = 'store' }) {
       </Dialog>
 
       <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#d32f2f' }}>
+        {/* Cambiado #d32f2f por error.main */}
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
           <WarningAmberRounded /> Confirmar eliminación
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: 'text.primary' }}>
             ¿Seguro que deseas eliminar este registro de gasto?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenConfirmDialog(false)} color="inherit">Cancelar</Button>
+          <Button onClick={() => setOpenConfirmDialog(false)} color="inherit" variant="outlined">Cancelar</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error">Eliminar</Button>
         </DialogActions>
       </Dialog>
@@ -325,7 +332,7 @@ export default function Expenses({ type = 'store' }) {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.severity} variant="filled">
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

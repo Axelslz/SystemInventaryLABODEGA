@@ -20,10 +20,13 @@ import {
   Menu as MenuIcon,       
   Close as CloseIcon,     
   ExpandLess,             
-  ExpandMore              
+  ExpandMore,
+  Brightness4, // <-- Icono Luna
+  Brightness7  // <-- Icono Sol
 } from '@mui/icons-material';
 
 import { useAuth } from '../context/AuthContext';
+import { useThemeMode } from '../context/ThemeContext'; // <-- Importamos nuestro contexto
 import logoImg from '../assets/logo.png'; 
 
 const Navbar = () => {
@@ -31,6 +34,9 @@ const Navbar = () => {
   const { user, logout } = useAuth(); 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
+  
+  // Extraemos el modo y la función para cambiarlo
+  const { mode, toggleTheme } = useThemeMode();
 
   // --- 1. DECLARAMOS TODOS LOS HOOKS PRIMERO (ANTES DE CUALQUIER RETURN) ---
   const [anchorEl, setAnchorEl] = useState(null);
@@ -53,7 +59,7 @@ const Navbar = () => {
   const handleMobileGastosToggle = () => setMobileGastosOpen(!mobileGastosOpen);
 
   const allMenuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin'] }, 
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin'] },   
     { text: 'Inventario', icon: <InventoryIcon />, path: '/inventory', roles: ['admin', 'empleado'] }, 
     { text: 'Punto de Venta', icon: <PointOfSaleIcon />, path: '/pos', roles: ['admin', 'empleado'] }, 
     { text: 'Mantenimiento', icon: <BuildIcon />, path: '/maintenance', roles: ['admin'] }, 
@@ -65,7 +71,7 @@ const Navbar = () => {
   if (!user) return null;
 
   const drawerContent = (
-    <Box sx={{ width: 280, height: '100%', bgcolor: '#f5f5f5' }}>
+    <Box sx={{ width: 280, height: '100%', bgcolor: mode === 'dark' ? '#1e1e1e' : '#f5f5f5', color: mode === 'dark' ? '#fff' : 'inherit' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: '#1565C0', color: 'white' }}>
         <Typography variant="h6" fontWeight="bold">MENÚ</Typography>
         <IconButton onClick={handleDrawerToggle} sx={{ color: 'white' }}>
@@ -87,7 +93,7 @@ const Navbar = () => {
                   </ListItemButton>
                 </ListItem>
                 <Collapse in={mobileGastosOpen} timeout="auto" unmountOnExit>
-                  <List component="div" disablePadding sx={{ bgcolor: '#e3f2fd' }}>
+                  <List component="div" disablePadding sx={{ bgcolor: mode === 'dark' ? '#333' : '#e3f2fd' }}>
                       <ListItemButton component={RouterLink} to="/expenses/store" onClick={handleDrawerToggle} sx={{ pl: 4 }}>
                         <ListItemIcon><StoreIcon fontSize="small" /></ListItemIcon>
                         <ListItemText primary="Gastos de Tienda" />
@@ -115,7 +121,7 @@ const Navbar = () => {
                 onClick={handleDrawerToggle}
                 selected={isActive}
                 sx={{ 
-                  '&.Mui-selected': { bgcolor: 'rgba(21, 101, 192, 0.12)', borderRight: '4px solid #1565C0' } 
+                  '&.Mui-selected': { bgcolor: mode === 'dark' ? 'rgba(21, 101, 192, 0.3)' : 'rgba(21, 101, 192, 0.12)', borderRight: '4px solid #1565C0' } 
                 }}
               >
                 <ListItemIcon sx={{ color: isActive ? '#1565C0' : 'inherit' }}>{item.icon}</ListItemIcon>
@@ -124,6 +130,19 @@ const Navbar = () => {
             </ListItem>
           );
         })}
+        
+        <Divider sx={{ my: 1 }} />
+        
+        {/* --- OPCIÓN DE MODO OSCURO EN MENÚ HAMBURGUESA --- */}
+        <ListItem disablePadding>
+          <ListItemButton onClick={toggleTheme}>
+            <ListItemIcon sx={{ color: mode === 'dark' ? '#ffd54f' : 'inherit' }}>
+              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            </ListItemIcon>
+            <ListItemText primary={mode === 'dark' ? 'Modo Claro' : 'Modo Oscuro'} />
+          </ListItemButton>
+        </ListItem>
+
       </List>
     </Box>
   );
@@ -134,10 +153,11 @@ const Navbar = () => {
         position="fixed" 
         elevation={4} 
         sx={{ 
-          background: 'linear-gradient(90deg, #1565C0 0%, #0D47A1 100%)',
+          background: mode === 'dark' ? '#121212' : 'linear-gradient(90deg, #1565C0 0%, #0D47A1 100%)',
           color: 'white',
           top: 0, left: 0, right: 0, width: '100%', 
-          zIndex: 1200
+          zIndex: 1200,
+          borderBottom: mode === 'dark' ? '1px solid #333' : 'none'
         }}
       >
         <Container maxWidth="xl">
@@ -239,6 +259,16 @@ const Navbar = () => {
             </Box>
 
             <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
+              
+              {/* --- BOTÓN MODO OSCURO (SOLO EN PC) --- */}
+              <IconButton 
+                onClick={toggleTheme} 
+                color="inherit" 
+                sx={{ mr: 1, display: { xs: 'none', md: 'flex' } }}
+              >
+                {mode === 'dark' ? <Brightness7 sx={{ color: '#ffd54f' }} /> : <Brightness4 />}
+              </IconButton>
+
               <Box sx={{ textAlign: 'right', mr: 1, display: { xs: 'none', sm: 'block' } }}>
                 <Typography variant="body2" fontWeight="bold" sx={{ lineHeight: 1, textTransform: 'uppercase' }}>{user?.username || 'Admin'}</Typography>
                 <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase' }}>{user?.role || 'Gerente'}</Typography>
@@ -278,7 +308,7 @@ const Navbar = () => {
         ModalProps={{ keepMounted: true }} 
         sx={{
           display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 280 },
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 280, bgcolor: mode === 'dark' ? '#1e1e1e' : '#fff' },
         }}
       >
         {drawerContent}

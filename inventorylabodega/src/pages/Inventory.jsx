@@ -7,16 +7,15 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, AttachMoney, WarningAmberRounded } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
-import { useAuth } from '../context/AuthContext'; // <--- IMPORTAMOS AUTH
+import { useAuth } from '../context/AuthContext'; 
 import ProductForm from '../components/ProductForm';
 
 export default function Inventory() {
   const { products, deleteProduct, addProduct, updateProduct } = useInventory();
-  const { user } = useAuth(); // <--- OBTENEMOS EL USUARIO
+  const { user } = useAuth(); 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
-  // Verificamos si es admin
   const isAdmin = user?.role === 'admin';
 
   const [openModal, setOpenModal] = useState(false);
@@ -89,7 +88,6 @@ export default function Inventory() {
                 Inventario
             </Typography>
             
-            {/* Solo mostramos la inversión al ADMIN */}
             {isAdmin && (
               <Chip 
                   icon={<AttachMoney />} 
@@ -100,14 +98,12 @@ export default function Inventory() {
                       fontWeight: 'bold', 
                       fontSize: { xs: '0.9rem', sm: '1.1rem' }, 
                       py: 2.5, px: 1, 
-                      backgroundColor: '#e8f5e9',
                       width: { xs: '100%', sm: 'auto' } 
                   }}
               />
             )}
         </Box>
 
-        {/* Botón Nuevo Producto: SOLO ADMIN */}
         {isAdmin && (
           <Button 
             variant="contained" 
@@ -125,24 +121,26 @@ export default function Inventory() {
         )}
       </Box>
 
-      <Paper elevation={3} sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {/* Se ajustó el color de fondo y el color del texto para que respete el tema (claro/oscuro) */}
+      <Paper elevation={3} sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
         <TableContainer sx={{ flexGrow: 1, maxHeight: '100%', overflowY: 'auto', overflowX: 'auto' }}>
           <Table stickyHeader size={isMobile ? "small" : "medium"}> 
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Material</TableCell>
-                <TableCell sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Proveedor</TableCell>
-                <TableCell align="center" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Stock</TableCell>
+                {/* Usamos 'action.selected' y 'text.primary' en lugar de hexadecimales */}
+                <TableCell sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Material</TableCell>
+                <TableCell sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Proveedor</TableCell>
+                <TableCell align="center" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Stock</TableCell>
                 
-                {/* Costo e Inversión SOLO ADMIN */}
-                {isAdmin && <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Costo U.</TableCell>}
-                {isAdmin && <TableCell align="right" sx={{ backgroundColor: '#dcedc8', fontWeight: 'bold', color: '#33691e', display: { xs: 'none', sm: 'table-cell' } }}>Inversión</TableCell>}
+                {isAdmin && <TableCell align="right" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Costo U.</TableCell>}
                 
-                <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>P. Menudeo</TableCell>
-                <TableCell align="right" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>P. Mayoreo</TableCell>
+                {/* Columna especial de Inversión adaptada al tema */}
+                {isAdmin && <TableCell align="right" sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)', color: 'success.main', fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>Inversión</TableCell>}
                 
-                {/* Columna Acciones SOLO ADMIN */}
-                {isAdmin && <TableCell align="center" sx={{ backgroundColor: '#eeeeee', fontWeight: 'bold' }}>Acciones</TableCell>}
+                <TableCell align="right" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>P. Menudeo</TableCell>
+                <TableCell align="right" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>P. Mayoreo</TableCell>
+                
+                {isAdmin && <TableCell align="center" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Acciones</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -160,7 +158,7 @@ export default function Inventory() {
 
                     return (
                         <TableRow key={row.id} hover>
-                            <TableCell sx={{ fontWeight:'bold' }}>
+                            <TableCell sx={{ fontWeight:'bold', color: 'text.primary' }}>
                                 {row.name}
                                 {isMobile && row.provider && (
                                     <Typography variant="caption" display="block" color="text.secondary">
@@ -174,34 +172,39 @@ export default function Inventory() {
                             </TableCell>
 
                             <TableCell align="center">
+                                {/* Alerta de stock bajo adaptada para contraste */}
                                 <Box component="span" sx={{ 
-                                    color: stock < 10 ? 'error.main' : 'inherit',
+                                    color: stock < 10 ? 'error.main' : 'text.primary',
                                     fontWeight: stock < 10 ? 'bold' : 'normal',
-                                    bgcolor: stock < 10 ? '#ffebee' : 'transparent',
-                                    px: 1, borderRadius: 1,
+                                    bgcolor: stock < 10 ? 'rgba(211, 47, 47, 0.1)' : 'transparent',
+                                    px: 1, py: 0.5, borderRadius: 1,
                                     whiteSpace: 'nowrap'
                                 }}>
                                     {stock} pzs
                                 </Box>
                             </TableCell>
 
-                            {/* Costo e Inversión SOLO ADMIN */}
-                            {isAdmin && <TableCell align="right">${costoU.toFixed(2)}</TableCell>}
+                            {isAdmin && <TableCell align="right" sx={{ color: 'text.primary' }}>${costoU.toFixed(2)}</TableCell>}
                             {isAdmin && (
-                              <TableCell align="right" sx={{ fontWeight:'bold', color: '#33691e', bgcolor:'#f1f8e9', display: { xs: 'none', sm: 'table-cell' } }}>
+                              <TableCell align="right" sx={{ 
+                                  fontWeight:'bold', 
+                                  color: 'success.main', 
+                                  bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.05)' : 'rgba(76, 175, 80, 0.04)', 
+                                  display: { xs: 'none', sm: 'table-cell' } 
+                              }}>
                                   ${totalInv}
                               </TableCell>
                             )}
                             
-                            <TableCell align="right" sx={{ color: '#1976d2' }}>
+                            {/* Colores primary.main y error.main se adaptan solos al dark mode */}
+                            <TableCell align="right" sx={{ color: 'primary.main', fontWeight: '500' }}>
                                 ${row.priceRetail}
                             </TableCell>
                             
-                            <TableCell align="right" sx={{ color: '#d32f2f', display: { xs: 'none', sm: 'table-cell' } }}>
+                            <TableCell align="right" sx={{ color: 'error.main', fontWeight: '500', display: { xs: 'none', sm: 'table-cell' } }}>
                                 ${row.priceWholesale}
                             </TableCell>
                             
-                            {/* Botones de Acción SOLO ADMIN */}
                             {isAdmin && (
                               <TableCell align="center">
                                   <Box display="flex" justifyContent="center">
@@ -219,7 +222,6 @@ export default function Inventory() {
         </TableContainer>
       </Paper>
 
-      {/* FAB flotante para móvil SOLO ADMIN */}
       {isAdmin && (
         <Fab 
           color="primary" 
@@ -236,7 +238,6 @@ export default function Inventory() {
         </Fab>
       )}
 
-      {/* Componentes de Modal solo se renderizan, la lógica de no abrirlos está en los botones */}
       <ProductForm 
         open={openModal} 
         handleClose={() => setOpenModal(false)} 
@@ -244,15 +245,12 @@ export default function Inventory() {
         initialData={editingProduct}
       />
 
-      <Dialog
-        open={openDeleteDialog}
-        onClose={handleCancelDelete}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#d32f2f' }}>
+      <Dialog open={openDeleteDialog} onClose={handleCancelDelete}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
             <WarningAmberRounded /> ¿Eliminar producto?
         </DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText sx={{ color: 'text.primary' }}>
             Esta acción eliminará el producto permanentemente del inventario. 
             ¿Estás seguro de continuar?
           </DialogContentText>
