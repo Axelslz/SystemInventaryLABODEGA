@@ -121,7 +121,6 @@ export default function Inventory() {
         )}
       </Box>
 
-      {/* Se ajustó el color de fondo y el color del texto para que respete el tema (claro/oscuro) */}
       <Paper elevation={3} sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
         <TableContainer sx={{ flexGrow: 1, maxHeight: '100%', overflowY: 'auto', overflowX: 'auto' }}>
           <Table stickyHeader size={isMobile ? "small" : "medium"}> 
@@ -172,7 +171,6 @@ export default function Inventory() {
                             </TableCell>
 
                             <TableCell align="center">
-                                {/* Alerta de stock bajo adaptada para contraste */}
                                 <Box component="span" sx={{ 
                                     color: stock < 10 ? 'error.main' : 'text.primary',
                                     fontWeight: stock < 10 ? 'bold' : 'normal',

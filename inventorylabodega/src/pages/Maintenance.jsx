@@ -161,7 +161,6 @@ export default function Maintenance() {
                     )}
                   </TableCell>
 
-                  {/* --- NUEVO: CELDA DE DATOS PARA KILOMETRAJE --- */}
                   {tabValue === 1 && (
                     <TableCell>
                         {row.mileage ? `${row.mileage} km` : '-'}
@@ -219,7 +218,6 @@ export default function Maintenance() {
         <Add />
       </Fab>
 
-      {/* DIÁLOGO */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle>Nuevo Registro de Mantenimiento</DialogTitle>
         <DialogContent dividers>
@@ -247,7 +245,6 @@ export default function Maintenance() {
               </TextField>
             </Grid>
             
-            {/* INPUT DE KILOMETRAJE EN EL FORMULARIO */}
             {formData.type === 'combustible' && (
               <Grid item xs={12} sm={6}>
                 <TextField 

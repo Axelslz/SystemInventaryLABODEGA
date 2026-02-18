@@ -21,12 +21,12 @@ import {
   Close as CloseIcon,     
   ExpandLess,             
   ExpandMore,
-  Brightness4, // <-- Icono Luna
-  Brightness7  // <-- Icono Sol
+  Brightness4, 
+  Brightness7  
 } from '@mui/icons-material';
 
 import { useAuth } from '../context/AuthContext';
-import { useThemeMode } from '../context/ThemeContext'; // <-- Importamos nuestro contexto
+import { useThemeMode } from '../context/ThemeContext'; 
 import logoImg from '../assets/logo.png'; 
 
 const Navbar = () => {
@@ -34,22 +34,15 @@ const Navbar = () => {
   const { user, logout } = useAuth(); 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
-  
-  // Extraemos el modo y la función para cambiarlo
   const { mode, toggleTheme } = useThemeMode();
-
-  // --- 1. DECLARAMOS TODOS LOS HOOKS PRIMERO (ANTES DE CUALQUIER RETURN) ---
   const [anchorEl, setAnchorEl] = useState(null);
   const [expensesAnchorEl, setExpensesAnchorEl] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileGastosOpen, setMobileGastosOpen] = useState(false);
-
-  // Variables derivadas
   const openUserMenu = Boolean(anchorEl);
   const openExpensesDesktop = Boolean(expensesAnchorEl);
   const isExpensesActive = location.pathname.includes('/expenses');
 
-  // Handlers
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);
   const handleCloseUserMenu = () => setAnchorEl(null);
   const handleLogout = () => { handleCloseUserMenu(); logout(); };
@@ -133,7 +126,6 @@ const Navbar = () => {
         
         <Divider sx={{ my: 1 }} />
         
-        {/* --- OPCIÓN DE MODO OSCURO EN MENÚ HAMBURGUESA --- */}
         <ListItem disablePadding>
           <ListItemButton onClick={toggleTheme}>
             <ListItemIcon sx={{ color: mode === 'dark' ? '#ffd54f' : 'inherit' }}>
@@ -260,7 +252,6 @@ const Navbar = () => {
 
             <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 1 }}>
               
-              {/* --- BOTÓN MODO OSCURO (SOLO EN PC) --- */}
               <IconButton 
                 onClick={toggleTheme} 
                 color="inherit" 

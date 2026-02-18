@@ -38,7 +38,6 @@ export const ThemeModeProvider = ({ children }) => {
   return (
     <ThemeModeContext.Provider value={{ mode, toggleTheme }}>
       <ThemeProvider theme={theme}>
-        {/* CssBaseline es MAGIA: Cambia el color de fondo y texto de toda la página automáticamente */}
         <CssBaseline /> 
         {children}
       </ThemeProvider>

@@ -18,14 +18,12 @@ import { printTicket, generateTicketHTML } from '../utils/printTicket';
 import { markSaleAsPaidService } from '../services/saleService';
 import DebtorsModal from '../components/DebtorsModal';
 import { getUsersRequest } from '../services/authService';
-import { useThemeMode } from '../context/ThemeContext'; // Mantenerlo para colores
+import { useThemeMode } from '../context/ThemeContext'; 
 
 export default function POS() {
   const { products, addSale, sales } = useInventory();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
-  
-  // Extraemos solo el modo para colores dinámicos
   const { mode } = useThemeMode();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -208,7 +206,6 @@ export default function POS() {
     return str.length > 9 ? '10px' : str.length > 7 ? '11px' : '12px';                    
   };
 
-  // Variables dinámicas para el Modo Oscuro
   const headerBgColor = mode === 'dark' ? '#333' : '#eee';
   const tableContainerBgColor = mode === 'dark' ? '#1e1e1e' : '#fafafa';
   const tableBorderColor = mode === 'dark' ? '#444' : '#eee';
@@ -222,8 +219,6 @@ export default function POS() {
     }}>
       
       <Grid container spacing={2} sx={{ height: '100%', width: '100%', m: 0 }}>
-        
-        {/* COLUMNA 1: CATÁLOGO */}
         <Grid size={{ xs: 12, md: 2 }} sx={{ height: isMobile ? '500px' : '100%', pl: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="bold">1. CATÁLOGO</Typography>
@@ -244,7 +239,6 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* COLUMNA 2: CARRITO */}
         <Grid size={{ xs: 12, md: 4 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}> 
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
@@ -329,7 +323,6 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* COLUMNA 3: DATOS TICKET */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
             <Typography variant="subtitle2" gutterBottom color="secondary" fontWeight="bold">3. DATOS TICKET</Typography>
@@ -402,7 +395,6 @@ export default function POS() {
           </Paper>
         </Grid>
 
-        {/* COLUMNA 4: VISTA PREVIA */}
         <Grid size={{ xs: 12, md: 3 }} sx={{ height: isMobile ? 'auto' : '100%', pt: '0 !important' }}>
           <Paper elevation={4} sx={{ p: 1, height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#424242', color: 'white' }}>
             <Typography variant="subtitle2" gutterBottom sx={{color: '#fff', fontWeight:'bold', display:'flex', alignItems:'center', gap:1}}>

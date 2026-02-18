@@ -30,8 +30,7 @@ export default function Dashboard() {
   const [loadingReset, setLoadingReset] = useState(false); 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' }); 
   
-  // NUEVO: Estado para el filtro de tiempo
-  const [timeFilter, setTimeFilter] = useState('week'); // 'week', 'month', 'all'
+  const [timeFilter, setTimeFilter] = useState('week'); 
 
   useEffect(() => {
     const fetchAllExpenses = async () => {
@@ -92,22 +91,18 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const today = new Date();
     
-    // --- Lógica para determinar el rango de fechas basado en el filtro ---
     let startDate, endDate;
     if (timeFilter === 'week') {
-        // startOfWeek usa domingo por defecto, {weekStartsOn: 1} lo cambia a Lunes si prefieres
         startDate = startOfWeek(today, { weekStartsOn: 1 }); 
         endDate = endOfWeek(today, { weekStartsOn: 1 });
     } else if (timeFilter === 'month') {
         startDate = startOfMonth(today);
         endDate = endOfMonth(today);
     } else { // 'all'
-        // Fechas extremas para que incluya todo
         startDate = new Date(2000, 0, 1); 
         endDate = new Date(2100, 0, 1);
     }
 
-    // Datos para las gráficas (siempre mostramos los últimos 7 días como panorama rápido)
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = subDays(today, 6 - i);
       return {
@@ -128,7 +123,6 @@ export default function Dashboard() {
             const dateString = sale.createdAt || sale.date || new Date();
             const saleDate = new Date(dateString);
             
-            // Verificamos si la venta cae dentro de nuestro rango de filtro
             const isWithinFilterRange = isWithinInterval(saleDate, { start: startDate, end: endDate });
 
             const productsList = sale.SaleItems || sale.items || sale.cart || [];
@@ -156,18 +150,15 @@ export default function Dashboard() {
 
             const saleProfit = saleTotal - saleCost;
             
-            // Acumulamos para KPIs SOLO si está en el rango seleccionado
             if (isWithinFilterRange) {
                 totalVentasGlobal += saleTotal;
                 totalCostoMercancia += saleCost;
             }
 
-            // Datos para el KPI de "Hoy" (independiente del filtro)
             if (isSameDay(saleDate, today)) {
                 ventasHoy += saleTotal;
             }
 
-            // Datos para las gráficas (Últimos 7 días fijos)
             const dayStat = last7Days.find(d => isSameDay(d.date, saleDate));
             if (dayStat) {
                 dayStat.ventas += saleTotal;
@@ -177,7 +168,6 @@ export default function Dashboard() {
         });
     }
 
-    // Filtrar gastos por fecha
     const gastosFiltrados = expenses.filter(exp => {
          const expDate = new Date(exp.date || exp.createdAt || new Date());
          return isWithinInterval(expDate, { start: startDate, end: endDate });
@@ -209,7 +199,7 @@ export default function Dashboard() {
       pieChartData: gastosPorTipo.filter(x => x.value > 0),
       filterLabel: timeFilter === 'week' ? 'Esta Semana' : timeFilter === 'month' ? 'Este Mes' : 'Histórico General'
     };
-  }, [sales, expenses, products, timeFilter]); // Agregamos timeFilter a las dependencias
+  }, [sales, expenses, products, timeFilter]); 
 
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
