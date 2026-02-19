@@ -38,10 +38,23 @@ export const InventoryProvider = ({ children }) => {
 
   const addProduct = async (productData) => { 
       try {
-        const newProduct = await createProductService(productData);
-        setProducts([...products, newProduct]);
+        const savedProduct = await createProductService(productData);
+        
+        setProducts(prevProducts => {
+            const alreadyExists = prevProducts.find(p => p.id === savedProduct.id);
+            
+            if (alreadyExists) {
+                return prevProducts.map(p => p.id === savedProduct.id ? savedProduct : p);
+            } else {
+                return [...prevProducts, savedProduct];
+            }
+        });
+        
         return true;
-      } catch (error) { console.error(error); return false; }
+      } catch (error) { 
+        console.error(error); 
+        return false; 
+      }
   };
 
   const updateProduct = async (id, updatedData) => { 

@@ -241,6 +241,7 @@ export default function Inventory() {
         handleClose={() => setOpenModal(false)} 
         onSave={handleSave}
         initialData={editingProduct}
+        existingProducts={products}
       />
 
       <Dialog open={openDeleteDialog} onClose={handleCancelDelete}>
