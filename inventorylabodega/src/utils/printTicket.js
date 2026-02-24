@@ -26,9 +26,6 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
   const clientPhone = customerInfo?.phone ? `Tel: ${customerInfo.phone}` : "";
   const paymentType = saleData.paymentMethod || "EFECTIVO";
   const sellerName = saleData.seller || "CAJA 1"; 
-
-  // --- LÓGICA DE FOLIO ---
-  // Si hay ticketNumber manual úsalo, si no, usa "F-" + id de sistema
   const folioDisplay = saleData.ticketNumber ? `${saleData.ticketNumber}` : `F-${saleData.id || '---'}`;
 
   return `
@@ -88,17 +85,29 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
             table-layout: fixed; 
           }
           th { border-top: 1px solid #000; border-bottom: 1px solid #000; font-size: 9px; padding: 2px 0; text-align: left;}
-          td { padding: 4px 0; vertical-align: top; font-size: 10px; }
+          /* Ajuste de padding para las celdas de la tabla */
+          td { padding: 4px 0 2px 0; vertical-align: top; font-size: 10px; border-bottom: 1px dotted #ccc; }
+          /* Quitamos el borde del último elemento */
+          tr:last-child td { border-bottom: none; }
           
-          .col-qty { width: 12%; text-align: center; }
+          .col-qty { width: 15%; text-align: center; font-weight: bold; font-size: 11px; }
           .col-desc { 
-            width: 63%; 
+            width: 55%; 
             text-align: left; 
             padding-right: 2px;
             white-space: normal; 
             overflow-wrap: break-word; 
           }
-          .col-price { width: 25%; text-align: right; }
+          .col-price { width: 30%; text-align: right; font-weight: bold; font-size: 11px; }
+          
+          /* Nueva clase para el precio unitario debajo de la descripción */
+          .unit-price { 
+            display: block; 
+            font-size: 9px; 
+            font-weight: normal; 
+            color: #333; 
+            margin-top: 2px; 
+          }
 
           .total-section { text-align: right; margin-top: 10px; font-size: 16px; font-weight: 800; border-top: 1px solid #000; padding-top: 5px;}
           .payment-info { text-align: right; font-size: 10px; font-weight: bold; margin-top: 2px; }
@@ -149,8 +158,11 @@ const getTicketHTML = (logoBase64, saleData, customerInfo, copyLabel) => {
           <tbody>
             ${saleData.items.map(item => `
               <tr>
-                <td class="col-qty bold">${item.quantity}</td>
-                <td class="col-desc">${item.name} ${item.isWholesale ? '(MY)' : ''}</td>
+                <td class="col-qty">${item.quantity}</td>
+                <td class="col-desc">
+                  ${item.name} ${item.isWholesale ? '(MY)' : ''}
+                  <span class="unit-price">${formatCurrency(item.price)} c/u</span>
+                </td>
                 <td class="col-price">${formatCurrency(item.price * item.quantity)}</td>
               </tr>
             `).join('')}

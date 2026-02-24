@@ -46,7 +46,6 @@ const Login = () => {
         }}
       >
         
-        {/* --- 2. Reemplazamos las letras por tu logo centrado --- */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Box 
             component="img" 
@@ -54,7 +53,7 @@ const Login = () => {
             alt="Logo Ferre La Bodega" 
             sx={{ 
               width: '100%', 
-              maxWidth: '250px', // Puedes subir o bajar este número si lo quieres más grande o pequeño
+              maxWidth: '250px',
               height: 'auto',
               objectFit: 'contain'
             }} 

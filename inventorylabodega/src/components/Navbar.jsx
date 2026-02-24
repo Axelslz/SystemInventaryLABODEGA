@@ -34,8 +34,6 @@ const Navbar = () => {
   const openUserMenu = Boolean(anchorEl);
   const openExpensesDesktop = Boolean(expensesAnchorEl);
   const isExpensesActive = location.pathname.includes('/expenses');
-
-  // Validamos de forma segura si es administrador
   const isAdmin = user?.role === 'admin';
 
   const handleProfileClick = (event) => setAnchorEl(event.currentTarget);

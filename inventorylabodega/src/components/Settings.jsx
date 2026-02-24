@@ -16,7 +16,6 @@ import {
 import { getUsersRequest, deleteUserRequest, registerRequest, updateUserRequest } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
 
-// --- PESTAÑAS (Tus componentes intactos) ---
 
 const UsuariosTab = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -164,12 +163,10 @@ const PrinterTab = () => {
   );
 };
 
-// --- COMPONENTE PRINCIPAL ---
 const Settings = () => {
   const { user } = useAuth();
   const [tabIndex, setTabIndex] = useState(0);
 
-  // PROTECCIÓN: Si es empleado, lo expulsamos al inicio inmediatamente
   if (user?.role !== 'admin') {
     return <Navigate to="/" />;
   }

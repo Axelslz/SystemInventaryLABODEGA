@@ -29,7 +29,7 @@ export default function Maintenance() {
     addRecord(formData);
     setOpen(false);
     setFormData({ 
-        vehicle: '', // Limpiamos también el vehículo por comodidad
+        vehicle: '', 
         type: 'servicio', 
         description: '', 
         cost: '', 
@@ -136,11 +136,10 @@ export default function Maintenance() {
                 <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Vehículo</TableCell>
                 
-                {/* --- NUEVO: COLUMNA KILOMETRAJE SOLO SI ES TAB DE COMBUSTIBLE (Índice 1) --- */}
+                
                 {tabValue === 1 && (
                     <TableCell sx={{ fontWeight: 'bold' }}>Kilometraje</TableCell>
                 )}
-                {/* ------------------------------------------------------------------------- */}
 
                 <TableCell sx={{ fontWeight: 'bold' }}>Concepto</TableCell>
                 <TableCell sx={{ fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Tipo</TableCell>
@@ -166,7 +165,6 @@ export default function Maintenance() {
                         {row.mileage ? `${row.mileage} km` : '-'}
                     </TableCell>
                   )}
-                  {/* --------------------------------------------- */}
 
                   <TableCell sx={{ minWidth: '150px' }}>{row.description}</TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>

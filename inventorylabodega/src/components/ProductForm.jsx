@@ -7,9 +7,11 @@ import { ArrowBack } from '@mui/icons-material';
 
 export default function ProductForm({ open, handleClose, onSave, initialData, existingProducts = [] }) {
   
+  // 1. Agregamos "unit" al estado por defecto
   const defaultState = {
     name: '',
     provider: 'General', 
+    unit: 'Pieza', // NUEVO CAMPO
     stock: '',
     cost: '', 
     priceRetail: '',
@@ -22,7 +24,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      setFormData({ ...defaultState, ...initialData }); // Aseguramos que tome 'Pieza' si viene sin unidad
       setIsCustomProvider(false); 
     } else {
       setFormData(defaultState);
@@ -51,20 +53,23 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
     }
   };
 
+  // 2. Usamos parseFloat para soportar decimales (ej. 1.5 Kilos)
   const costoUnitario = parseFloat(formData.cost) || 0;
-  const cantidadPiezas = parseInt(formData.stock) || 0;
-  const inversionTotal = (costoUnitario * cantidadPiezas).toFixed(2);
+  const cantidad = parseFloat(formData.stock) || 0; 
+  const inversionTotal = (costoUnitario * cantidad).toFixed(2);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const productToSend = {
       ...formData,
-      stock: parseInt(formData.stock) || 0,
+      // Convertimos todo con parseFloat para no perder los decimales de los kilos/metros
+      stock: parseFloat(formData.stock) || 0,
       cost: parseFloat(formData.cost) || 0,
       priceRetail: parseFloat(formData.priceRetail) || 0,
       priceWholesale: parseFloat(formData.priceWholesale) || 0,
-      wholesaleQty: parseInt(formData.wholesaleQty) || 1,
-      provider: formData.provider && formData.provider.trim() !== '' ? formData.provider.trim() : 'General' 
+      wholesaleQty: parseFloat(formData.wholesaleQty) || 1,
+      provider: formData.provider && formData.provider.trim() !== '' ? formData.provider.trim() : 'General',
+      unit: formData.unit || 'Pieza'
     };
     
     onSave(productToSend);
@@ -79,7 +84,6 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
       
       <form onSubmit={handleSubmit}>
         <DialogContent dividers sx={{ pb: 3 }}>
-          {/* Usamos spacing={3} para dar más aire entre los campos */}
           <Grid container spacing={3}>
             
             {/* --- SECCIÓN 1: DATOS GENERALES --- */}
@@ -90,7 +94,8 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
               <Divider sx={{ mt: 0.5, mb: -1 }} />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            {/* El nombre ahora ocupa todo el ancho para dar espacio abajo */}
+            <Grid item xs={12}>
               <TextField
                 autoFocus
                 label="Nombre del Material"
@@ -100,8 +105,11 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
                 fullWidth
                 required
                 variant="outlined"
+                placeholder="Ej. Cemento Cruz Azul o Clavos 2 pulgadas"
               />
             </Grid>
+
+            {/* Proveedor */}
             <Grid item xs={12} sm={6}>
               {!isCustomProvider ? (
                 <TextField
@@ -130,7 +138,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
                     value={formData.provider}
                     onChange={handleChange}
                     fullWidth
-                    placeholder="Ej. Cemex"
+                    placeholder="Ej. Truper"
                     required 
                   />
                   <IconButton onClick={() => setIsCustomProvider(false)} color="secondary" title="Volver a la lista">
@@ -138,6 +146,26 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
                   </IconButton>
                 </Box>
               )}
+            </Grid>
+
+            {/* NUEVO CAMPO: Unidad de Medida */}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                select
+                label="Unidad de Medida"
+                name="unit"
+                value={formData.unit}
+                onChange={handleChange}
+                fullWidth
+                required
+              >
+                <MenuItem value="Pieza">Pieza (pz)</MenuItem>
+                <MenuItem value="Kilo">Kilogramo (kg)</MenuItem>
+                <MenuItem value="Metro">Metro (m)</MenuItem>
+                <MenuItem value="Litro">Litro (L)</MenuItem>
+                <MenuItem value="Caja">Caja</MenuItem>
+                <MenuItem value="Bulto">Bulto</MenuItem>
+              </TextField>
             </Grid>
 
             {/* --- SECCIÓN 2: COSTOS E INVENTARIO --- */}
@@ -157,7 +185,7 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Costo por pieza"
+                helperText={`Costo por ${formData.unit.toLowerCase()}`} // Texto dinámico
                 inputProps={{ min: 0, step: "any" }}
                 InputProps={{
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -167,14 +195,15 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
 
             <Grid item xs={12} sm={4}>
               <TextField
-                label="Cantidad Piezas"
+                label="Cantidad / Stock"
                 name="stock"
                 type="number"
                 value={formData.stock}
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Stock inicial"
+                helperText={`Stock en ${formData.unit.toLowerCase()}s`} // Texto dinámico
+                inputProps={{ min: 0, step: "any" }} // step="any" permite decimales
               />
             </Grid>
 
@@ -239,7 +268,8 @@ export default function ProductForm({ open, handleClose, onSave, initialData, ex
                 onChange={handleChange}
                 fullWidth
                 required
-                helperText="Piezas mínimas"
+                inputProps={{ min: 0, step: "any" }} // Permite comprar "1.5 kilos" como mayoreo
+                helperText={`Cant. mínima (${formData.unit.toLowerCase()}s)`}
               />
             </Grid>
 

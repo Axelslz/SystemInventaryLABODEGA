@@ -29,7 +29,6 @@ const CONFIG = {
 
 export default function Expenses({ type = 'store' }) {
   const theme = useTheme();
-  // 1. Detectar si estamos en celular (pantalla menor a 'md')
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); 
 
   const currentConfig = CONFIG[type] || CONFIG.store;
@@ -151,9 +150,7 @@ export default function Expenses({ type = 'store' }) {
   const placeholderDesc = isPayroll ? "Ej. Sueldo Quincenal, Bono..." : "Ej. Pago recibo CFE Enero";
 
   return (
-    <Box sx={{ p: isMobile ? 1.5 : 3, pb: isMobile ? 10 : 3 }}> {/* Espacio abajo en celular para el botón flotante */}
-      
-      {/* --- ENCABEZADO --- */}
+    <Box sx={{ p: isMobile ? 1.5 : 3, pb: isMobile ? 10 : 3 }}> 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={isMobile ? 2 : 3}>
         <Box display="flex" alignItems="center" gap={isMobile ? 1.5 : 2}>
           <Box sx={{ bgcolor: 'primary.main', color: 'white', p: isMobile ? 0.5 : 1, borderRadius: 2, display: 'flex' }}>
@@ -171,7 +168,6 @@ export default function Expenses({ type = 'store' }) {
           </Box>
         </Box>
         
-        {/* Botón normal en PC, oculto en celular */}
         {!isMobile && (
           <Button variant="contained" startIcon={<Add />} onClick={handleOpen}>
             {isPayroll ? 'Registrar Pago' : 'Nuevo Gasto'}
@@ -196,7 +192,6 @@ export default function Expenses({ type = 'store' }) {
         </Grid>
       </Grid>
 
-      {/* --- LISTA DE GASTOS --- */}
       {isMobile ? (
         // --- VISTA CELULAR (Tarjetas) ---
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -245,7 +240,6 @@ export default function Expenses({ type = 'store' }) {
           )}
         </Box>
       ) : (
-        // --- VISTA PC (Tabla normal) ---
         <Paper sx={{ width: '100%', mb: 2, overflow: 'hidden', bgcolor: 'background.paper' }}>
           <TableContainer sx={{ maxHeight: 500 }}>
             <Table stickyHeader>
@@ -295,7 +289,6 @@ export default function Expenses({ type = 'store' }) {
         </Paper>
       )}
 
-      {/* --- BOTÓN FLOTANTE CELULAR (FAB) --- */}
       {isMobile && (
         <Fab 
           color="primary" 
@@ -303,7 +296,7 @@ export default function Expenses({ type = 'store' }) {
           onClick={handleOpen}
           sx={{
             position: 'fixed',
-            bottom: 70, // Espacio suficiente por si hay barra de navegación
+            bottom: 70, 
             right: 20,
             boxShadow: 3
           }}
@@ -312,7 +305,6 @@ export default function Expenses({ type = 'store' }) {
         </Fab>
       )}
 
-      {/* --- MODAL PARA AGREGAR --- */}
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ color: 'text.primary' }}>
           {isPayroll ? 'Registrar Pago' : `Registrar Gasto - ${currentConfig.title}`}
@@ -387,7 +379,6 @@ export default function Expenses({ type = 'store' }) {
         </DialogActions>
       </Dialog>
 
-      {/* --- MODAL DE CONFIRMACIÓN DE BORRADO --- */}
       <Dialog open={openConfirmDialog} onClose={() => setOpenConfirmDialog(false)}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
           <WarningAmberRounded /> Confirmar eliminación
@@ -403,7 +394,6 @@ export default function Expenses({ type = 'store' }) {
         </DialogActions>
       </Dialog>
 
-      {/* --- SNACKBAR --- */}
       <Snackbar 
         open={snackbar.open} 
         autoHideDuration={4000} 
