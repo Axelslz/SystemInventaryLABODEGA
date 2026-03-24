@@ -21,3 +21,8 @@ export const deleteProductService = async (id) => {
   const response = await api.delete(`${PRODUCT_ENDPOINT}/${id}`);
   return response.data;
 };
+
+export const addProductStockService = async (id, stockData) => {
+  const response = await api.post(`${PRODUCT_ENDPOINT}/${id}/stock`, stockData);
+  return response.data;
+};

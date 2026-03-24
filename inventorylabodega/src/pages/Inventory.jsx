@@ -3,26 +3,34 @@ import {
   Box, Typography, Button, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, IconButton, Chip,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  useTheme, useMediaQuery, Fab 
+  useTheme, useMediaQuery, Fab, TextField 
 } from '@mui/material';
-import { Edit, Delete, Add, AttachMoney, WarningAmberRounded } from '@mui/icons-material';
+import { Edit, Delete, Add, AttachMoney, WarningAmberRounded, AddBox } from '@mui/icons-material';
 import { useInventory } from '../context/InventoryContext';
 import { useAuth } from '../context/AuthContext'; 
 import ProductForm from '../components/ProductForm';
 
 export default function Inventory() {
-  const { products, deleteProduct, addProduct, updateProduct } = useInventory();
+  // Asegúrate de extraer addStockToProduct de tu contexto
+  const { products, deleteProduct, addProduct, updateProduct, addStockToProduct } = useInventory();
   const { user } = useAuth(); 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const isAdmin = user?.role === 'admin';
 
+  // Estados originales
   const [openModal, setOpenModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
+  // NUEVOS ESTADOS: Para el modal de agregar stock
+  const [openStockModal, setOpenStockModal] = useState(false);
+  const [stockProduct, setStockProduct] = useState(null);
+  const [newStockData, setNewStockData] = useState({ addedStock: '', newCost: '' });
+
+  // Handlers originales
   const handleOpenCreate = () => {
     setEditingProduct(null); 
     setOpenModal(true);
@@ -59,6 +67,33 @@ export default function Inventory() {
     setProductToDelete(null);
   };
 
+  // NUEVOS HANDLERS: Para el flujo de agregar stock
+  const handleOpenStock = (product) => {
+    setStockProduct(product);
+    // Sugerimos el costo actual por defecto para facilitar la captura
+    setNewStockData({ addedStock: '', newCost: product.cost || 0 }); 
+    setOpenStockModal(true);
+  };
+
+  const handleSaveStock = () => {
+    // Validamos que haya producto y que la cantidad sea mayor a 0
+    if (stockProduct && Number(newStockData.addedStock) > 0) {
+      if (addStockToProduct) {
+        addStockToProduct(stockProduct.id, newStockData); 
+      } else {
+        console.warn("Recuerda agregar la función addStockToProduct en tu InventoryContext");
+      }
+      setOpenStockModal(false);
+      setStockProduct(null);
+    }
+  };
+
+  const handleCancelStock = () => {
+    setOpenStockModal(false);
+    setStockProduct(null);
+  };
+
+  // Cálculos
   const totalInversionInventario = products.reduce((acc, prod) => {
       const costo = parseFloat(prod.cost) || 0;
       const stock = parseInt(prod.stock) || 0;
@@ -126,14 +161,12 @@ export default function Inventory() {
           <Table stickyHeader size={isMobile ? "small" : "medium"}> 
             <TableHead>
               <TableRow>
-                {/* Usamos 'action.selected' y 'text.primary' en lugar de hexadecimales */}
                 <TableCell sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Material</TableCell>
                 <TableCell sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold', display: { xs: 'none', md: 'table-cell' } }}>Proveedor</TableCell>
                 <TableCell align="center" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Stock</TableCell>
                 
                 {isAdmin && <TableCell align="right" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>Costo U.</TableCell>}
                 
-                {/* Columna especial de Inversión adaptada al tema */}
                 {isAdmin && <TableCell align="right" sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.08)', color: 'success.main', fontWeight: 'bold', display: { xs: 'none', sm: 'table-cell' } }}>Inversión</TableCell>}
                 
                 <TableCell align="right" sx={{ bgcolor: 'action.selected', color: 'text.primary', fontWeight: 'bold' }}>P. Menudeo</TableCell>
@@ -159,6 +192,11 @@ export default function Inventory() {
                         <TableRow key={row.id} hover>
                             <TableCell sx={{ fontWeight:'bold', color: 'text.primary' }}>
                                 {row.name}
+                                {row.barcode && (
+                                        <Typography variant="caption" display="block" color="primary.main" sx={{ mt: 0.5, fontWeight: 'bold' }}>
+                                            CÓDIGO: {row.barcode}
+                                        </Typography>
+                                    )}
                                 {isMobile && row.provider && (
                                     <Typography variant="caption" display="block" color="text.secondary">
                                         {row.provider}
@@ -194,7 +232,6 @@ export default function Inventory() {
                               </TableCell>
                             )}
                             
-                            {/* Colores primary.main y error.main se adaptan solos al dark mode */}
                             <TableCell align="right" sx={{ color: 'primary.main', fontWeight: '500' }}>
                                 ${row.priceRetail}
                             </TableCell>
@@ -206,8 +243,18 @@ export default function Inventory() {
                             {isAdmin && (
                               <TableCell align="center">
                                   <Box display="flex" justifyContent="center">
-                                      <IconButton color="primary" onClick={() => handleOpenEdit(row)} size="small"><Edit fontSize="small"/></IconButton>
-                                      <IconButton color="error" onClick={() => handleDeleteClick(row.id)} size="small"><Delete fontSize="small"/></IconButton>
+                                      {/* BOTÓN NUEVO: Agregar Stock */}
+                                      <IconButton color="success" onClick={() => handleOpenStock(row)} size="small" title="Ingresar Stock">
+                                          <AddBox fontSize="small"/>
+                                      </IconButton>
+                                      
+                                      <IconButton color="primary" onClick={() => handleOpenEdit(row)} size="small" title="Editar Producto">
+                                          <Edit fontSize="small"/>
+                                      </IconButton>
+                                      
+                                      <IconButton color="error" onClick={() => handleDeleteClick(row.id)} size="small" title="Eliminar Producto">
+                                          <Delete fontSize="small"/>
+                                      </IconButton>
                                   </Box>
                               </TableCell>
                             )}
@@ -236,6 +283,7 @@ export default function Inventory() {
         </Fab>
       )}
 
+      {/* Formulario Original */}
       <ProductForm 
         open={openModal} 
         handleClose={() => setOpenModal(false)} 
@@ -244,6 +292,7 @@ export default function Inventory() {
         existingProducts={products}
       />
 
+      {/* Modal para Confirmar Eliminación */}
       <Dialog open={openDeleteDialog} onClose={handleCancelDelete}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
             <WarningAmberRounded /> ¿Eliminar producto?
@@ -260,6 +309,54 @@ export default function Inventory() {
           </Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" autoFocus>
             Sí, eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* NUEVO MODAL: Ingresar Stock y Promediar */}
+      <Dialog open={openStockModal} onClose={handleCancelStock} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+          Ingresar Stock
+        </DialogTitle>
+        <DialogContent dividers>
+          <DialogContentText sx={{ mb: 2 }}>
+            Producto: <strong>{stockProduct?.name}</strong><br/>
+            Stock actual: <strong>{stockProduct?.stock} pzs</strong><br/>
+            Costo actual: <strong>${stockProduct?.cost}</strong>
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Cantidad nueva a ingresar"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={newStockData.addedStock}
+            onChange={(e) => setNewStockData({ ...newStockData, addedStock: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="dense"
+            label="Costo unitario de compra ($)"
+            type="number"
+            fullWidth
+            variant="outlined"
+            value={newStockData.newCost}
+            onChange={(e) => setNewStockData({ ...newStockData, newCost: e.target.value })}
+            helperText="Se usará para promediar el costo de todo el stock."
+          />
+        </DialogContent>
+        <DialogActions sx={{ pb: 2, px: 3 }}>
+          <Button onClick={handleCancelStock} variant="outlined" color="inherit">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSaveStock} 
+            variant="contained" 
+            color="success"
+            disabled={!newStockData.addedStock || Number(newStockData.addedStock) <= 0}
+          >
+            Ingresar y Promediar
           </Button>
         </DialogActions>
       </Dialog>

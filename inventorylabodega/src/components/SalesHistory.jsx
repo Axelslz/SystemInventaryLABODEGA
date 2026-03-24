@@ -1,124 +1,171 @@
 import React, { useState } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, Table, TableBody, TableCell, 
-  TableHead, TableRow, Button, IconButton, Popover, Box, Typography,
-  List, ListItem, ListItemText, Divider 
+  TableHead, TableRow, Button, IconButton, Box, Typography, DialogActions 
 } from '@mui/material';
-import { Visibility } from '@mui/icons-material';
+import { Visibility, Print } from '@mui/icons-material'; 
+import { generateTicketHTML } from '../utils/printTicket'; 
 
 export default function SalesHistory({ open, onClose, sales }) {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [currentItems, setCurrentItems] = useState([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [ticketHTML, setTicketHTML] = useState('');
 
-  const handleOpenPopover = (event, items) => {
-    setAnchorEl(event.currentTarget);
-    setCurrentItems(items);
+  const handleOpenPreview = async (sale) => {
+    setIsPreviewOpen(true);
+    setTicketHTML('');
+
+    const itemsList = sale.SaleItems || sale.items || sale.cart || [];
+    
+    const saleData = {
+      id: sale.id,
+      ticketNumber: sale.ticketNumber,
+      date: sale.createdAt || sale.date,
+      paymentMethod: sale.paymentMethod,
+      seller: sale.seller,
+      total: sale.total,
+      items: itemsList.map(item => ({
+        name: item.productName || item.name,
+        quantity: item.quantity,
+        price: item.price,
+        isWholesale: false 
+      }))
+    };
+
+    const customerInfo = {
+      name: sale.customerName,
+      address: sale.customerAddress,
+      phone: sale.customerPhone
+    };
+
+    try {
+      const html = await generateTicketHTML(saleData, customerInfo);
+      setTicketHTML(html);
+    } catch (error) {
+      console.error("Error al generar la vista previa del ticket:", error);
+      setTicketHTML('<div style="padding: 20px; text-align: center;">Error al generar el ticket.</div>');
+    }
   };
 
-  const handleClosePopover = () => {
-    setAnchorEl(null);
+  const handleClosePreview = () => {
+    setIsPreviewOpen(false);
+    setTicketHTML('');
   };
 
-  const isPopoverOpen = Boolean(anchorEl);
+  const handlePrintTicket = () => {
+    if (!ticketHTML) return;
+    const printWindow = window.open('', '_blank', 'width=300,height=600');
+    if (printWindow) {
+      printWindow.document.write(ticketHTML);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 250);
+    }
+  };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>Historial de Ventas</DialogTitle>
-      <DialogContent dividers>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold' }}>Folio</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Productos</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold' }}>Total</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(!sales || sales.length === 0) ? (
-              <TableRow><TableCell colSpan={4} align="center" sx={{ py: 3 }}>Cargando o sin ventas...</TableCell></TableRow>
-            ) : (
-              sales.map((sale) => {
-                const itemsList = sale.SaleItems || sale.items || sale.cart || [];
-                
-                return (
-                  <TableRow key={sale.id} hover>
-                    <TableCell>#{sale.id || sale.ticketNumber}</TableCell>
-                    <TableCell>
-                      {new Date(sale.createdAt || sale.date).toLocaleString('es-MX')}
-                    </TableCell>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="body2">
-                          {itemsList.length} artículos
-                        </Typography>
-                        {itemsList.length > 0 && (
-                          <IconButton 
-                            size="small" 
-                            color="info" 
-                            onClick={(e) => handleOpenPopover(e, itemsList)}
-                            title="Ver detalles"
-                          >
-                            <Visibility fontSize="small" />
-                          </IconButton>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                      ${parseFloat(sale.total).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+    <>
+      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Historial de Ventas</DialogTitle>
+        <DialogContent dividers>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>Folio</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Cliente</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Fecha</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Productos</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>Total</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(!sales || sales.length === 0) ? (
+                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3 }}>Cargando o sin ventas...</TableCell></TableRow>
+              ) : (
+                sales.map((sale) => {
+                  const itemsList = sale.SaleItems || sale.items || sale.cart || [];
+                  const folioAMostrar = sale.ticketNumber ? sale.ticketNumber : `F-${sale.id}`;
+                  
+                  return (
+                    <TableRow key={sale.id} hover>
+                      <TableCell>#{folioAMostrar}</TableCell>
+                      <TableCell>{sale.customerName || 'PÚBLICO EN GENERAL'}</TableCell>
+                      <TableCell>
+                        {new Date(sale.createdAt || sale.date).toLocaleString('es-MX')}
+                      </TableCell>
+                      <TableCell>
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Typography variant="body2">
+                            {itemsList.length} artículos
+                          </Typography>
+                          {itemsList.length > 0 && (
+                            <IconButton 
+                              size="small" 
+                              color="info" 
+                              onClick={() => handleOpenPreview(sale)}
+                              title="Ver ticket"
+                            >
+                              <Visibility fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                        ${parseFloat(sale.total).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <Box p={2}>
+          <Button onClick={onClose} fullWidth variant="outlined">Cerrar Historial</Button>
+        </Box>
+      </Dialog>
 
-        <Popover
-          open={isPopoverOpen}
-          anchorEl={anchorEl}
-          onClose={handleClosePopover}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-          PaperProps={{ sx: { width: 350, maxHeight: 400 } }}
-        >
-          <Box sx={{ p: 2, bgcolor: '#1976d2', color: 'white' }}>
-            <Typography variant="subtitle2" fontWeight="bold">
-              Detalle de artículos
-            </Typography>
-          </Box>
-          <List dense sx={{ pt: 0 }}>
-            {currentItems.map((item, index) => {
-              const nombreMostrado = item.productName || item.name || 'Producto';
-              const precio = parseFloat(item.price || 0);
-              const cantidad = parseInt(item.quantity || 1);
+      <Dialog 
+        open={isPreviewOpen} 
+        onClose={handleClosePreview} 
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 'bold', pb: 1 }}>
+          Vista Previa
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 0, height: '450px', backgroundColor: '#f5f5f5' }}>
+          {ticketHTML ? (
+            <iframe
+              srcDoc={ticketHTML}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              title="Vista previa del ticket"
+            />
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+              <Typography color="text.secondary">Generando ticket...</Typography>
+            </Box>
+          )}
+        </DialogContent>
 
-              return (
-                <React.Fragment key={item.id || index}>
-                  <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <ListItemText 
-                      primary={<Typography variant="body2" fontWeight="bold">{nombreMostrado}</Typography>} 
-                      secondary={
-                        <Typography variant="caption" color="text.secondary">
-                          {cantidad} x ${precio.toFixed(2)}
-                        </Typography>
-                      }
-                    />
-                    <Typography variant="body2" fontWeight="bold" sx={{ alignSelf: 'flex-end', color: 'success.main' }}>
-                      ${(cantidad * precio).toFixed(2)}
-                    </Typography>
-                  </ListItem>
-                  {index < currentItems.length - 1 && <Divider component="li" />}
-                </React.Fragment>
-              )
-            })}
-          </List>
-        </Popover>
-
-      </DialogContent>
-      <Box p={2}>
-        <Button onClick={onClose} fullWidth variant="outlined">Cerrar</Button>
-      </Box>
-    </Dialog>
+        <DialogActions sx={{ px: 2, pb: 2, pt: 1, gap: 1 }}>
+          <Button onClick={handleClosePreview} variant="outlined" color="inherit" sx={{ flex: 1 }}>
+            Cerrar
+          </Button>
+          <Button 
+            onClick={handlePrintTicket} 
+            variant="contained" 
+            color="primary" 
+            startIcon={<Print />}
+            disabled={!ticketHTML}
+            sx={{ flex: 1 }}
+          >
+            Imprimir
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
-} 
+}

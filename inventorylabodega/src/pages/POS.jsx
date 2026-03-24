@@ -67,7 +67,13 @@ export default function POS() {
     name: 'PÚBLICO EN GENERAL', address: 'DOMICILIO CONOCIDO', location: 'TUXTLA GTZ, CHIAPAS', phone: ''
   });
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredProducts = products.filter(p => {
+      const search = searchTerm.toLowerCase();
+      const matchName = p.name.toLowerCase().includes(search);
+      const matchBarcode = p.barcode ? p.barcode.toLowerCase().includes(search) : false;
+      
+      return matchName || matchBarcode;
+  });
 
   useEffect(() => {
     const newTotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -92,14 +98,27 @@ export default function POS() {
   }, [cart, total, customer, paymentMethod, seller, manualFolio]); 
 
   const addToCart = (product) => {
+    if (product.stock <= 0) {
+      showSnackbar(`❌ Producto sin existencia: ${product.name}`, "error");
+      return; 
+    }
     const existingItem = cart.find(item => item.id === product.id);
-    const pRetail = parseFloat(product.priceRetail);
-    const pWholesale = parseFloat(product.priceWholesale);
 
     if (existingItem) {
+      if (existingItem.quantity + 1 > product.stock) {
+        showSnackbar(`⚠️ Solo tienes ${product.stock} en stock de ${product.name}`, "warning");
+        return; 
+      }
       updateQuantity(product.id, existingItem.quantity + 1);
-    } else {
+    } 
+    else {
+      if (product.stock <= 5) { 
+        showSnackbar(`⚠️ Quedan pocos en existencia de ${product.name} (Stock: ${product.stock})`, "warning");
+      }
+      const pRetail = parseFloat(product.priceRetail);
+      const pWholesale = parseFloat(product.priceWholesale);
       const initialPrice = (1 >= product.wholesaleQty) ? pWholesale : pRetail;
+      
       setCart([...cart, { 
         ...product, quantity: 1, price: initialPrice, 
         priceRetail: pRetail, priceWholesale: pWholesale, isWholesale: (1 >= product.wholesaleQty)
@@ -108,15 +127,35 @@ export default function POS() {
   };
 
   const updateQuantity = (id, newQty) => {
-    if (newQty < 1) return;
-    setCart(cart.map(item => {
+    if (newQty <= 0 || isNaN(newQty)) return; 
+
+    let limiteAlcanzado = false;
+    let nombreProducto = "";
+    let stockMaximo = 0;
+
+    const carritoActualizado = cart.map(item => {
       if (item.id === id) {
-        const isWholesale = newQty >= item.wholesaleQty;
+        let cantidadFinal = newQty;
+        
+        if (newQty > item.stock) {
+          cantidadFinal = item.stock; 
+          limiteAlcanzado = true;
+          nombreProducto = item.name;
+          stockMaximo = item.stock;
+        }
+
+        const isWholesale = cantidadFinal >= item.wholesaleQty;
         const currentPrice = isWholesale ? item.priceWholesale : item.priceRetail;
-        return { ...item, quantity: newQty, price: currentPrice, isWholesale: isWholesale };
+        return { ...item, quantity: cantidadFinal, price: currentPrice, isWholesale: isWholesale };
       }
       return item;
-    }));
+    });
+
+    if (limiteAlcanzado) {
+      showSnackbar(`⚠️ Solo tienes ${stockMaximo} disponibles de ${nombreProducto}`, "error");
+    }
+
+    setCart(carritoActualizado);
   };
 
   const updatePrice = (id, newPrice) => {
@@ -159,7 +198,7 @@ export default function POS() {
         total: total, 
         amountPaid: parseFloat(amountPaid) || total, 
         change: change > 0 ? change : 0, 
-        date: today,
+        date: new Date(),
         ticketNumber: manualFolio 
     };
 
@@ -168,7 +207,7 @@ export default function POS() {
     if (success) {
         const saleRecord = { 
             id: manualFolio || "PROCESANDO...", 
-            date: today, 
+            date: new Date(), 
             items: cart, 
             total: total,
             paymentMethod: paymentMethod,  
@@ -176,7 +215,7 @@ export default function POS() {
             ticketNumber: manualFolio
         };
         
-        printTicket(saleRecord, saleData); 
+        printTicket(saleRecord, saleData);
         
         setCart([]); setTotal(0); setAmountPaid(''); setManualFolio('');
         setPaymentMethod('EFECTIVO'); 
@@ -224,17 +263,57 @@ export default function POS() {
             <Typography variant="subtitle2" gutterBottom color="primary" fontWeight="bold">1. CATÁLOGO</Typography>
             <TextField placeholder="Buscar..." variant="outlined" size="small" fullWidth value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ mb: 1 }} />
             <List sx={{ flexGrow: 1, overflowY: 'auto', pr: 0.5 }}>
-              {filteredProducts.map((prod) => (
-                <ListItem key={prod.id} disablePadding divider>
-                  <ListItemButton onClick={() => addToCart(prod)} sx={{ py: 1, px: 1 }}>
-                    <ListItemText 
-                      primary={<Typography variant="caption" fontWeight="bold">{prod.name}</Typography>}
-                      secondary={<Typography variant="caption" color="text.secondary">Stock: {prod.stock} | ${prod.priceRetail}</Typography>} 
-                    />
-                    <AddShoppingCart color="primary" fontSize="small" />
-                  </ListItemButton>
-                </ListItem>
-              ))}
+              {filteredProducts.map((prod) => {
+                const isAgotado = prod.stock <= 0;
+                const isPoco = prod.stock > 0 && prod.stock <= 15; 
+
+                return (
+                  <ListItem key={prod.id} disablePadding divider>
+                    <ListItemButton 
+                      onClick={() => {
+                        if (isAgotado) {
+                          showSnackbar(`❌ Producto agotado: ${prod.name}`, "error");
+                        } else {
+                          addToCart(prod);
+                        }
+                      }} 
+                      sx={{ 
+                        py: 1, px: 1,
+                        opacity: isAgotado ? 0.5 : 1, 
+                        bgcolor: isAgotado ? 'action.hover' : 'inherit',
+                        cursor: isAgotado ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      <ListItemText 
+                        primary={
+                          <Typography 
+                            variant="caption" 
+                            fontWeight="bold" 
+                            sx={{ 
+                              color: isAgotado ? 'text.disabled' : 'text.primary', 
+                              textDecoration: isAgotado ? 'line-through' : 'none' 
+                            }}
+                          >
+                            {prod.name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography 
+                            variant="caption" 
+                            color={isAgotado ? "error.main" : (isPoco ? "warning.main" : "text.secondary")} 
+                            fontWeight={isPoco || isAgotado ? "bold" : "normal"}
+                          >
+                            Stock: {prod.stock} | ${prod.priceRetail} 
+                            {isAgotado && " (AGOTADO)"} 
+                            {isPoco && " (¡Pocos!)"}
+                          </Typography>
+                        } 
+                      />
+                      <AddShoppingCart color={isAgotado ? "disabled" : "primary"} fontSize="small" />
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
             </List>
           </Paper>
         </Grid>
@@ -269,9 +348,16 @@ export default function POS() {
                         <TextField 
                             type="number" 
                             variant="standard" 
-                            value={item.quantity} 
-                            onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 0)} 
-                            inputProps={{ style: { textAlign: 'center', fontWeight: 'bold' } }} 
+                            value={item.quantity === 0 ? '' : item.quantity} 
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                updateQuantity(item.id, isNaN(val) ? 0 : val);
+                            }} 
+                            inputProps={{ 
+                                min: "0", 
+                                step: "any", 
+                                style: { textAlign: 'center', fontWeight: 'bold' } 
+                            }} 
                             sx={{ width: '50px' }} 
                         />
                       </TableCell>
