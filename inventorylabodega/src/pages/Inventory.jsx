@@ -11,7 +11,6 @@ import { useAuth } from '../context/AuthContext';
 import ProductForm from '../components/ProductForm';
 
 export default function Inventory() {
-  // Asegúrate de extraer addStockToProduct de tu contexto
   const { products, deleteProduct, addProduct, updateProduct, addStockToProduct } = useInventory();
   const { user } = useAuth(); 
   const theme = useTheme();
@@ -19,18 +18,15 @@ export default function Inventory() {
   
   const isAdmin = user?.role === 'admin';
 
-  // Estados originales
   const [openModal, setOpenModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
-  // NUEVOS ESTADOS: Para el modal de agregar stock
   const [openStockModal, setOpenStockModal] = useState(false);
   const [stockProduct, setStockProduct] = useState(null);
   const [newStockData, setNewStockData] = useState({ addedStock: '', newCost: '' });
 
-  // Handlers originales
   const handleOpenCreate = () => {
     setEditingProduct(null); 
     setOpenModal(true);
@@ -67,16 +63,13 @@ export default function Inventory() {
     setProductToDelete(null);
   };
 
-  // NUEVOS HANDLERS: Para el flujo de agregar stock
   const handleOpenStock = (product) => {
     setStockProduct(product);
-    // Sugerimos el costo actual por defecto para facilitar la captura
     setNewStockData({ addedStock: '', newCost: product.cost || 0 }); 
     setOpenStockModal(true);
   };
 
   const handleSaveStock = () => {
-    // Validamos que haya producto y que la cantidad sea mayor a 0
     if (stockProduct && Number(newStockData.addedStock) > 0) {
       if (addStockToProduct) {
         addStockToProduct(stockProduct.id, newStockData); 
@@ -243,7 +236,6 @@ export default function Inventory() {
                             {isAdmin && (
                               <TableCell align="center">
                                   <Box display="flex" justifyContent="center">
-                                      {/* BOTÓN NUEVO: Agregar Stock */}
                                       <IconButton color="success" onClick={() => handleOpenStock(row)} size="small" title="Ingresar Stock">
                                           <AddBox fontSize="small"/>
                                       </IconButton>
@@ -283,7 +275,6 @@ export default function Inventory() {
         </Fab>
       )}
 
-      {/* Formulario Original */}
       <ProductForm 
         open={openModal} 
         handleClose={() => setOpenModal(false)} 
@@ -292,7 +283,6 @@ export default function Inventory() {
         existingProducts={products}
       />
 
-      {/* Modal para Confirmar Eliminación */}
       <Dialog open={openDeleteDialog} onClose={handleCancelDelete}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
             <WarningAmberRounded /> ¿Eliminar producto?
@@ -313,7 +303,6 @@ export default function Inventory() {
         </DialogActions>
       </Dialog>
 
-      {/* NUEVO MODAL: Ingresar Stock y Promediar */}
       <Dialog open={openStockModal} onClose={handleCancelStock} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ color: 'primary.main', fontWeight: 'bold' }}>
           Ingresar Stock

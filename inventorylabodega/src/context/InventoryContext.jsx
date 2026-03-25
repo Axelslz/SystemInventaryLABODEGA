@@ -3,7 +3,8 @@ import {
   getProductsService, 
   createProductService, 
   updateProductService, 
-  deleteProductService 
+  deleteProductService,
+  addProductStockService
 } from '../services/productService';
 import { createSaleService, getSalesHistoryService } from '../services/saleService';
 
@@ -88,6 +89,20 @@ export const InventoryProvider = ({ children }) => {
     }
   };
 
+  const addStockToProduct = async (id, stockData) => {
+    try {
+      
+      const updatedProduct = await addProductStockService(id, stockData);
+      
+      setProducts(products.map(p => p.id === id ? updatedProduct : p));
+      
+      return updatedProduct;
+    } catch (error) {
+      console.error("Error al agregar stock:", error);
+      throw error;
+    }
+  };
+
   return (
     <InventoryContext.Provider value={{ 
       products, 
@@ -96,7 +111,8 @@ export const InventoryProvider = ({ children }) => {
       updateProduct, 
       deleteProduct, 
       addSale,
-      loadSales 
+      loadSales,
+      addStockToProduct
     }}>
       {children}
     </InventoryContext.Provider>

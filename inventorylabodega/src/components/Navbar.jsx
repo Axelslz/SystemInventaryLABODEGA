@@ -12,7 +12,8 @@ import {
   Badge as BadgeIcon, Build as BuildIcon, ReceiptLong as ReceiptIcon,
   Store as StoreIcon, Warehouse as WarehouseIcon, ArrowDropDown as ArrowDropDownIcon,
   Groups as GroupsIcon, Menu as MenuIcon, Close as CloseIcon, 
-  ExpandLess, ExpandMore, Brightness4, Brightness7
+  ExpandLess, ExpandMore, Brightness4, Brightness7,
+  RequestQuote as RequestQuoteIcon 
 } from '@mui/icons-material';
 
 import { useAuth } from '../context/AuthContext';
@@ -53,6 +54,8 @@ const Navbar = () => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin'] },   
     { text: 'Inventario', icon: <InventoryIcon />, path: '/inventory', roles: ['admin', 'empleado'] }, 
     { text: 'Punto de Venta', icon: <PointOfSaleIcon />, path: '/pos', roles: ['admin', 'empleado'] }, 
+    // NUEVA VISTA DE COTIZACIONES AQUÍ
+    { text: 'Cotización', icon: <RequestQuoteIcon />, path: '/cotizacion', roles: ['admin', 'empleado'] }, 
     { text: 'Mantenimiento', icon: <BuildIcon />, path: '/maintenance', roles: ['admin'] }, 
     { text: 'Gastos', icon: <ReceiptIcon />, path: null, isDropdown: true, roles: ['admin'] }, 
   ];
@@ -192,14 +195,12 @@ const Navbar = () => {
                 </Box>
                 <Divider />
                 
-                {/* SI ES ADMIN, LE MOSTRAMOS CONFIGURACIÓN */}
                 {isAdmin && (
                   <MenuItem component={RouterLink} to="/settings" onClick={handleCloseUserMenu}>
                     <ListItemIcon><BadgeIcon fontSize="small" /></ListItemIcon> Configuración
                   </MenuItem>
                 )}
 
-                {/* TODOS VEN CERRAR SESIÓN */}
                 <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                   <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon> Cerrar Sesión
                 </MenuItem>

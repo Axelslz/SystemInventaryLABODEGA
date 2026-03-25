@@ -98,7 +98,7 @@ export default function Dashboard() {
     } else if (timeFilter === 'month') {
         startDate = startOfMonth(today);
         endDate = endOfMonth(today);
-    } else { // 'all'
+    } else { 
         startDate = new Date(2000, 0, 1); 
         endDate = new Date(2100, 0, 1);
     }
@@ -215,7 +215,7 @@ export default function Dashboard() {
          </Box>
          
          <Box display="flex" gap={2} alignItems="center">
-            {/* NUEVO: Selector de Filtro de Tiempo */}
+            
             <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel id="time-filter-label" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <FilterAlt fontSize="small" /> Filtro

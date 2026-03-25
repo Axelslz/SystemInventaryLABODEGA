@@ -14,17 +14,17 @@ import Dashboard from './pages/Dashboard';
 import Maintenance from './pages/Maintenance';
 import Expenses from './pages/Expenses';
 import Settings from './components/Settings'; 
+// 1. IMPORTAMOS EL NUEVO COMPONENTE (Asegúrate de que la ruta coincida donde lo guardaste)
+import Cotizacion from './pages/Cotizacion'; 
 import { ThemeModeProvider } from './context/ThemeContext';
 
 function App() {
   return (
-    // 1. ENVOLVEMOS TODA LA APLICACIÓN CON EL PROVEEDOR DEL TEMA
     <ThemeModeProvider>
       <AuthProvider>
         <InventoryProvider>
           <MaintenanceProvider>
             <Router>
-              {/* Le quitamos el bgcolor fijo para que el CssBaseline del ThemeModeProvider haga su magia */}
               <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
                 <Navbar /> 
                 <Box component="main" sx={{ flexGrow: 1, width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -32,6 +32,8 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
                     <Route path="/pos" element={<ProtectedRoute><POS/></ProtectedRoute>} />
+                    <Route path="/cotizacion" element={<ProtectedRoute><Cotizacion /></ProtectedRoute>} />
+
                     <Route path="/" element={<ProtectedRoute><RoleRoute allowedRoles={['admin']}><Dashboard/></RoleRoute></ProtectedRoute>} />
                     <Route path="/maintenance" element={<ProtectedRoute><RoleRoute allowedRoles={['admin']}><Maintenance /></RoleRoute></ProtectedRoute>} />
                     <Route path="/expenses" element={<ProtectedRoute><RoleRoute allowedRoles={['admin']}><Expenses /></RoleRoute></ProtectedRoute>} />
