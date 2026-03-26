@@ -54,7 +54,6 @@ const Navbar = () => {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/', roles: ['admin'] },   
     { text: 'Inventario', icon: <InventoryIcon />, path: '/inventory', roles: ['admin', 'empleado'] }, 
     { text: 'Punto de Venta', icon: <PointOfSaleIcon />, path: '/pos', roles: ['admin', 'empleado'] }, 
-    // NUEVA VISTA DE COTIZACIONES AQUÍ
     { text: 'Cotización', icon: <RequestQuoteIcon />, path: '/cotizacion', roles: ['admin', 'empleado'] }, 
     { text: 'Mantenimiento', icon: <BuildIcon />, path: '/maintenance', roles: ['admin'] }, 
     { text: 'Gastos', icon: <ReceiptIcon />, path: null, isDropdown: true, roles: ['admin'] }, 

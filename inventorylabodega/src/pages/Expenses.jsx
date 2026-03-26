@@ -175,7 +175,6 @@ export default function Expenses({ type = 'store' }) {
         )}
       </Box>
 
-      {/* --- TOTAL ACUMULADO --- */}
       <Grid container spacing={2} mb={isMobile ? 2 : 4}>
         <Grid item xs={12} sm={4}>
           <Card sx={{ borderLeft: 5, borderColor: 'error.main', bgcolor: 'background.paper', boxShadow: isMobile ? 1 : 2 }}>
@@ -193,7 +192,6 @@ export default function Expenses({ type = 'store' }) {
       </Grid>
 
       {isMobile ? (
-        // --- VISTA CELULAR (Tarjetas) ---
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {records.length === 0 ? (
             <Typography textAlign="center" color="text.secondary" sx={{ mt: 4 }}>

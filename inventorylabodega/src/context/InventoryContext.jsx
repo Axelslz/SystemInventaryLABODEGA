@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+// 1. IMPORTAMOS USEAUTH PARA SABER SI ESTÁ LOGUEADO
+import { useAuth } from './AuthContext'; 
 import { 
   getProductsService, 
   createProductService, 
@@ -13,11 +15,17 @@ const InventoryContext = createContext();
 export const InventoryProvider = ({ children }) => {
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]); 
+  const { isAuthenticated } = useAuth(); 
 
   useEffect(() => {
-    loadProducts();
-    loadSales(); 
-  }, []);
+    if (isAuthenticated) {
+      loadProducts();
+      loadSales(); 
+    } else {
+      setProducts([]);
+      setSales([]);
+    }
+  }, [isAuthenticated]); 
 
   const loadProducts = async () => {
     try {
@@ -91,11 +99,8 @@ export const InventoryProvider = ({ children }) => {
 
   const addStockToProduct = async (id, stockData) => {
     try {
-      
       const updatedProduct = await addProductStockService(id, stockData);
-      
       setProducts(products.map(p => p.id === id ? updatedProduct : p));
-      
       return updatedProduct;
     } catch (error) {
       console.error("Error al agregar stock:", error);

@@ -26,3 +26,8 @@ export const addProductStockService = async (id, stockData) => {
   const response = await api.post(`${PRODUCT_ENDPOINT}/${id}/stock`, stockData);
   return response.data;
 };
+
+export const getProductHistoryService = async (id) => {
+  const response = await api.get(`${PRODUCT_ENDPOINT}/${id}/history`);
+  return response.data;
+};

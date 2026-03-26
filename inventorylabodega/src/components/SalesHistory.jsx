@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, Table, TableBody, TableCell, 
-  TableHead, TableRow, Button, IconButton, Box, Typography, DialogActions 
+  TableHead, TableRow, Button, IconButton, Box, Typography, DialogActions,
+  TextField 
 } from '@mui/material';
 import { Visibility, Print } from '@mui/icons-material'; 
 import { generateTicketHTML } from '../utils/printTicket'; 
@@ -9,6 +10,7 @@ import { generateTicketHTML } from '../utils/printTicket';
 export default function SalesHistory({ open, onClose, sales }) {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [ticketHTML, setTicketHTML] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleOpenPreview = async (sale) => {
     setIsPreviewOpen(true);
@@ -65,10 +67,30 @@ export default function SalesHistory({ open, onClose, sales }) {
     }
   };
 
+  const filteredSales = sales?.filter((sale) => {
+    const folio = sale.ticketNumber ? sale.ticketNumber.toString().toLowerCase() : `f-${sale.id}`.toLowerCase();
+    const customerName = (sale.customerName || 'PÚBLICO EN GENERAL').toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    return folio.includes(searchLower) || customerName.includes(searchLower);
+  }) || [];
+
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>Historial de Ventas</DialogTitle>
+        
+        <Box px={3} pb={2}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Buscar por folio o cliente..."
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </Box>
+
         <DialogContent dividers>
           <Table size="small">
             <TableHead>
@@ -83,8 +105,10 @@ export default function SalesHistory({ open, onClose, sales }) {
             <TableBody>
               {(!sales || sales.length === 0) ? (
                 <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3 }}>Cargando o sin ventas...</TableCell></TableRow>
+              ) : filteredSales.length === 0 ? (
+                <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3 }}>No se encontraron coincidencias</TableCell></TableRow>
               ) : (
-                sales.map((sale) => {
+                filteredSales.map((sale) => {
                   const itemsList = sale.SaleItems || sale.items || sale.cart || [];
                   const folioAMostrar = sale.ticketNumber ? sale.ticketNumber : `F-${sale.id}`;
                   

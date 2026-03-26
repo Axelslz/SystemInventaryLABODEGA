@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
   companySubtitle: { fontSize: 11, fontWeight: 'bold', marginBottom: 2 },
   companyText: { fontSize: 9, color: '#333', marginBottom: 2 },
   clientTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#1565C0' },
+  folioText: { fontSize: 12, fontWeight: 'bold', color: '#E53935', marginBottom: 4 }, 
   clientText: { fontSize: 9, marginBottom: 4 },
   table: { display: 'table', width: '100%', borderStyle: 'solid', borderWidth: 1, borderColor: '#000', borderBottomWidth: 0, borderRightWidth: 0 },
   tableRow: { flexDirection: 'row' },
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   footerText: { fontSize: 9, marginBottom: 3 }
 });
 
-const MyDocument = ({ clientName, date, items, total }) => (
+const MyDocument = ({ clientName, date, items, total, folio }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       
@@ -55,6 +56,7 @@ const MyDocument = ({ clientName, date, items, total }) => (
         </View>
         <View style={styles.headerRight}>
           <Text style={styles.clientTitle}>COTIZACIÓN</Text>
+          <Text style={styles.folioText}>FOLIO: {folio}</Text> 
           <Text style={styles.clientText}>FECHA: {date}</Text>
           <Text style={styles.clientText}>CLIENTE: {clientName || 'Público en general'}</Text>
           <Text style={styles.clientText}>TEL: (961) 690 5168</Text>
@@ -105,6 +107,8 @@ export default function Cotizacion() {
   const [quantity, setQuantity] = useState(1);
   const [clientName, setClientName] = useState('');
   const [quoteItems, setQuoteItems] = useState([]);
+  
+  const [folio, setFolio] = useState(1000);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -116,6 +120,13 @@ export default function Cotizacion() {
       }
     };
     fetchProducts();
+
+    const storedFolio = localStorage.getItem('cotizacionFolio');
+    if (storedFolio) {
+      setFolio(parseInt(storedFolio, 10));
+    } else {
+      localStorage.setItem('cotizacionFolio', '1000');
+    }
   }, []);
 
   const handleAddItem = () => {
@@ -148,10 +159,15 @@ export default function Cotizacion() {
   };
 
   const handleClearQuote = () => {
+
     setClientName('');
     setQuoteItems([]);
     setSelectedProduct(null);
     setQuantity(1);
+    
+    const nextFolio = folio + 1;
+    setFolio(nextFolio);
+    localStorage.setItem('cotizacionFolio', nextFolio.toString());
   };
 
   const total = quoteItems.reduce((acc, item) => {
@@ -168,7 +184,10 @@ export default function Cotizacion() {
         
         <Grid size={{ xs: 12, md: 4, lg: 4 }}>
           <Paper sx={{ p: 2, height: '100%', overflowY: 'auto' }}>
-            <Typography variant="h6" gutterBottom fontWeight="bold">Cotización</Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold">Cotización</Typography>
+              <Typography variant="subtitle1" color="error" fontWeight="bold">Folio: {folio}</Typography>
+            </Box>
             
             <TextField 
               fullWidth label="Nombre del Cliente" variant="outlined" margin="normal" size="small"
@@ -257,9 +276,8 @@ export default function Cotizacion() {
               fullWidth 
               sx={{ mt: 2 }} 
               onClick={handleClearQuote}
-              disabled={quoteItems.length === 0 && clientName === ''}
             >
-              Limpiar Cotización
+              Nueva Cotización (Avanzar Folio)
             </Button>
           </Paper>
         </Grid>
@@ -271,7 +289,8 @@ export default function Cotizacion() {
                 clientName={clientName} 
                 date={today} 
                 items={quoteItems} 
-                total={total} 
+                total={total}
+                folio={folio} 
               />
             </PDFViewer>
           </Paper>
